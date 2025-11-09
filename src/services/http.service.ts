@@ -57,17 +57,34 @@ class HttpService {
         return response;
       },
       async (error: AxiosError<ApiError>) => {
-        console.error(
-          "[HTTP Response Error]",
-          error.response?.status,
-          error.config?.url
-        );
+        // Log detailed error information
+        console.error("[HTTP Response Error]", {
+          status: error.response?.status,
+          url: error.config?.url,
+          message: error.message,
+          code: error.code,
+          data: error.response?.data,
+        });
 
         // Handle 401 Unauthorized - token expired atau invalid
         if (error.response?.status === 401) {
           console.log("[HTTP] Unauthorized - clearing auth data");
           await StorageService.clearAll();
           // TODO: Redirect to login screen
+        }
+
+        // Handle Network Error
+        if (
+          error.message === "Network Error" ||
+          error.code === "ECONNABORTED"
+        ) {
+          console.error("[HTTP] Network error - check connection and CORS");
+          return Promise.reject({
+            status: false,
+            message:
+              "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+            errors: undefined,
+          });
         }
 
         // Format error untuk konsistensi
@@ -108,6 +125,25 @@ class HttpService {
 
   async patch<T>(url: string, data?: any, config?: any): Promise<T> {
     const response = await this.client.patch<T>(url, data, config);
+    return response.data;
+  }
+
+  // POST dengan FormData (multipart/form-data)
+  async postFormData<T>(url: string, formData: FormData): Promise<T> {
+    console.log("[HTTP] Posting FormData to:", url);
+
+    const response = await this.client.post<T>(url, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Accept: "application/json",
+      },
+      transformRequest: (data, headers) => {
+        // Let React Native handle FormData transformation
+        return data;
+      },
+    });
+
+    console.log("[HTTP] FormData response received:", response.status);
     return response.data;
   }
 

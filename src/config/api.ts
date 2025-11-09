@@ -30,7 +30,7 @@ export const API_ENDPOINTS = {
   LIST_MONTIR: "/montir/list",
 
   // Bengkel
-  CREATE_BENGKEL: "/bengkel/create",
+  CREATE_BENGKEL: "/bengkel-management/simpan-data-bengkel",
   CHECK_STATUS: "/bengkel/status/validate",
 
   // Services

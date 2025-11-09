@@ -18,14 +18,29 @@ export interface RegisterRequest {
   role: "pelanggan" | "bengkel";
 }
 
+export interface Bengkel {
+  id: number;
+  user_id: number;
+  nama: string;
+  alamat: string;
+  latitude: string;
+  longitude: string;
+  verifikasi: number; // 0 = belum verifikasi, 1 = terverifikasi
+  alasan_penolakan: string | null;
+  foto: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface User {
-  id: number; 
+  id: number;
   nama: string;
   alamat: string;
   email: string;
   no_telp: string;
   role: string;
   foto?: string | null;
+  bengkel?: Bengkel; // Data bengkel jika role = bengkel
   created_at?: string;
   updated_at?: string;
 }
@@ -33,7 +48,7 @@ export interface User {
 export interface AuthResponse {
   status: boolean;
   message: string;
-  data: User; 
+  data: User;
   token?: string;
 }
 
