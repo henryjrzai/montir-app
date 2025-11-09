@@ -69,6 +69,21 @@ export const StorageService = {
     }
   },
 
+  // Update Bengkel Data in User
+  async updateUserBengkel(bengkel: any): Promise<void> {
+    try {
+      const user = await this.getUser();
+      if (user) {
+        user.bengkel = bengkel;
+        await this.saveUser(user);
+        console.log("[Storage] User bengkel data updated in storage");
+      }
+    } catch (error) {
+      console.error("Error updating user bengkel:", error);
+      throw error;
+    }
+  },
+
   // Clear All Data
   async clearAll(): Promise<void> {
     try {

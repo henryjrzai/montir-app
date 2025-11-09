@@ -11,6 +11,7 @@ import React, {
   useState,
 } from "react";
 import { AuthService } from "../services/auth.service";
+import { StorageService } from "../services/storage.service";
 import { ApiError, User } from "../types/auth.types";
 
 interface AuthContextType {
@@ -147,9 +148,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
+      console.log("[AuthContext] Refreshing user data...");
       const response = await AuthService.getProfile();
       if (response.success && response.data) {
+        // Update state
         setUser(response.data);
+        // IMPORTANT: Save to storage untuk persist data
+        await StorageService.saveUser(response.data);
+        console.log("[AuthContext] User data refreshed and saved to storage");
       }
     } catch (error) {
       console.error("Error refreshing user:", error);

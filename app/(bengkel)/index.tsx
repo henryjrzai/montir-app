@@ -3,20 +3,93 @@
  */
 
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/contexts/AuthContext";
+import { BengkelService } from "../../src/services/bengkel.service";
+import { StorageService } from "../../src/services/storage.service";
+import { BengkelData } from "../../src/types/bengkel.types";
 import { checkBengkelStatus } from "../../src/utils/bengkelHelper";
 
 export default function BengkelHomeScreen() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
   const bengkelStatus = checkBengkelStatus(user);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [bengkelData, setBengkelData] = useState<BengkelData | null>(null);
+
+  // Function untuk load status bengkel dari server
+  const loadBengkelStatus = useCallback(async () => {
+    try {
+      const response = await BengkelService.checkValidationStatus();
+      if (response.status && response.data) {
+        setBengkelData(response.data);
+
+        // Update storage dengan bengkel data terbaru
+        await StorageService.updateUserBengkel(response.data);
+
+        // Update user context juga (akan fetch full profile)
+        await refreshUser();
+
+        console.log(
+          "[BengkelHome] Status updated - verifikasi:",
+          response.data.verifikasi
+        );
+      }
+    } catch (error: any) {
+      console.error("[BengkelHome] Failed to load status:", error);
+      // Jika error, gunakan data dari user context
+      if (user?.bengkel) {
+        setBengkelData(user.bengkel as any);
+      }
+    }
+  }, [refreshUser, user?.bengkel]);
+
+  // Load bengkel status saat pertama kali mount
+  useEffect(() => {
+    if (user?.bengkel) {
+      loadBengkelStatus();
+    }
+  }, [user?.bengkel, loadBengkelStatus]);
+
+  // Handle pull to refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await loadBengkelStatus();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadBengkelStatus]);
 
   // Function untuk handle lengkapi data
   const handleLengkapiData = () => {
     router.push("/(bengkel)/setup-bengkel" as any);
   };
+
+  // Determine current status based on latest data
+  const currentBengkelStatus = bengkelData
+    ? {
+        hasData: true,
+        isVerified: bengkelData.verifikasi === 1,
+        type: bengkelData.verifikasi === 1 ? "success" : "warning",
+        message:
+          bengkelData.verifikasi === 1
+            ? "Bengkel Anda sudah terverifikasi dan dapat menerima orderan."
+            : bengkelData.alasan_penolakan
+            ? `Bengkel Anda ditolak: ${bengkelData.alasan_penolakan}`
+            : "Data bengkel Anda sedang dalam proses verifikasi oleh admin.",
+      }
+    : bengkelStatus;
 
   return (
     <View style={styles.container}>
@@ -26,30 +99,45 @@ export default function BengkelHomeScreen() {
         <Text style={styles.role}>Bengkel</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
+            title="Memuat status bengkel..."
+            titleColor={Colors.text.secondary}
+          />
+        }
+      >
         {/* Alert/Notification Box */}
-        {!bengkelStatus.isVerified && (
+        {!currentBengkelStatus.isVerified && (
           <View
             style={[
               styles.alertBox,
-              bengkelStatus.type === "warning" && styles.alertWarning,
-              bengkelStatus.type === "error" && styles.alertError,
+              currentBengkelStatus.type === "warning" && styles.alertWarning,
+              currentBengkelStatus.type === "error" && styles.alertError,
             ]}
           >
             <View style={styles.alertIconContainer}>
               <Text style={styles.alertIcon}>
-                {bengkelStatus.type === "warning" ? "⚠️" : "❌"}
+                {currentBengkelStatus.type === "warning" ? "⚠️" : "❌"}
               </Text>
             </View>
             <View style={styles.alertContent}>
               <Text style={styles.alertTitle}>
-                {!bengkelStatus.hasData
+                {!currentBengkelStatus.hasData
                   ? "Data Bengkel Belum Lengkap"
                   : "Menunggu Verifikasi"}
               </Text>
-              <Text style={styles.alertMessage}>{bengkelStatus.message}</Text>
+              <Text style={styles.alertMessage}>
+                {currentBengkelStatus.message}
+              </Text>
 
-              {!bengkelStatus.hasData && (
+              {!currentBengkelStatus.hasData && (
                 <TouchableOpacity
                   style={styles.alertButton}
                   onPress={handleLengkapiData}
@@ -61,13 +149,27 @@ export default function BengkelHomeScreen() {
           </View>
         )}
 
+        {/* Info Bengkel (jika sudah verified) */}
+        {currentBengkelStatus.isVerified && bengkelData && (
+          <View style={styles.infoCard}>
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedIcon}>✓</Text>
+              <Text style={styles.verifiedText}>Terverifikasi</Text>
+            </View>
+            <Text style={styles.infoTitle}>{bengkelData.nama}</Text>
+            <Text style={styles.infoSubtitle}>{bengkelData.alamat}</Text>
+          </View>
+        )}
+
         {/* Placeholder Content */}
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>
-            Dashboard Bengkel akan ditampilkan di sini
+            {refreshing
+              ? "Memperbarui status..."
+              : "Tarik ke bawah untuk refresh status bengkel"}
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -82,6 +184,9 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 60,
     paddingBottom: 40,
+  },
+  scrollView: {
+    flex: 1,
   },
   greeting: {
     fontSize: 16,
@@ -100,7 +205,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
   },
   // Alert Box Styles

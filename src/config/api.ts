@@ -31,7 +31,7 @@ export const API_ENDPOINTS = {
 
   // Bengkel
   CREATE_BENGKEL: "/bengkel-management/simpan-data-bengkel",
-  CHECK_STATUS: "/bengkel/status/validate",
+  CHECK_STATUS: "/bengkel-management/cek-validasi",
 
   // Services
   ADD_SERVICE: "/services/add",

@@ -4,7 +4,10 @@
  */
 
 import { API_ENDPOINTS } from "../config/api";
-import { SetupBengkelResponse } from "../types/bengkel.types";
+import {
+  CheckStatusResponse,
+  SetupBengkelResponse,
+} from "../types/bengkel.types";
 import { httpService } from "./http.service";
 
 export const BengkelService = {
@@ -93,8 +96,23 @@ export const BengkelService = {
    * Check status validasi bengkel
    * GET /bengkel/status/validate
    */
-  async checkValidationStatus(): Promise<any> {
-    const response = await httpService.get<any>(API_ENDPOINTS.CHECK_STATUS);
-    return response;
+  async checkValidationStatus(): Promise<CheckStatusResponse> {
+    try {
+      console.log("[BengkelService] Checking validation status...");
+
+      const response = await httpService.get<CheckStatusResponse>(
+        API_ENDPOINTS.CHECK_STATUS
+      );
+
+      console.log("[BengkelService] Status check result:", {
+        verifikasi: response.data.verifikasi,
+        nama: response.data.nama,
+      });
+
+      return response;
+    } catch (error: any) {
+      console.error("[BengkelService] Check status failed:", error);
+      throw error;
+    }
   },
 };
