@@ -17,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User | null>;
   register: (
     nama: string,
     alamat: string,
@@ -69,7 +69,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<User | null> => {
     try {
       setIsLoading(true);
       const response = await AuthService.login({ email, password });
@@ -78,6 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // response.data langsung adalah user object
         setUser(response.data);
         setIsAuthenticated(true);
+        return response.data;
       } else {
         throw new Error(response.message || "Login gagal");
       }

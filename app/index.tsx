@@ -3,20 +3,22 @@ import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Colors } from "../src/constants/colors";
 import { useAuth } from "../src/contexts/AuthContext";
+import { getRoleRoute } from "../src/utils/roleRouter";
 
 export default function Index() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
-        router.replace("/(tabs)");
+      if (isAuthenticated && user) {
+        // Redirect berdasarkan role user menggunakan helper
+        router.replace(getRoleRoute(user.role) as any);
       } else {
         router.replace("/login" as any);
       }
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, user, router]);
 
   return (
     <View style={styles.container}>

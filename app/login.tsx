@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { Colors } from "../src/constants/colors";
 import { useAuth } from "../src/contexts/AuthContext";
+import { getRoleRoute } from "../src/utils/roleRouter";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -58,9 +59,12 @@ export default function LoginScreen() {
     if (!validateForm()) return;
 
     try {
-      await login(email, password);
-      // Navigasi akan otomatis handled oleh root layout
-      router.replace("/(tabs)");
+      const userData = await login(email, password);
+
+      // Redirect berdasarkan role menggunakan helper
+      if (userData?.role) {
+        router.replace(getRoleRoute(userData.role) as any);
+      }
     } catch (error: any) {
       Alert.alert(
         "Login Gagal",
