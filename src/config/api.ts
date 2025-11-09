@@ -30,6 +30,9 @@ export const API_ENDPOINTS = {
   LIST_MONTIR: "/montir/list",
 
   // Bengkel
+  LIST_MONTIR_BENGKEL: "/bengkel-management/montir/daftar-montir",
+  CREATE_MONTIR_BENGKEL: "/bengkel-management/montir/tambah-montir",
+  DELETE_MONTIR_BENGKEL: "/bengkel-management/montir/hapus-montir",
   CREATE_BENGKEL: "/bengkel-management/simpan-data-bengkel",
   CHECK_STATUS: "/bengkel-management/cek-validasi",
   LIST_ORDER_BENGKEL: "/bengkel-management/order-layanan/list-order-bengkel",

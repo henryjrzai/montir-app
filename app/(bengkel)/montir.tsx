@@ -3,9 +3,11 @@
  */
 
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,99 +16,145 @@ import {
   View,
 } from "react-native";
 import { Colors } from "../../src/constants/colors";
-
-interface Montir {
-  id: number;
-  nama: string;
-  no_telp: string;
-  email: string;
-}
+import { montirService } from "../../src/services/montir.service";
+import { MontirBengkelItem } from "../../src/types/montir.types";
 
 export default function MontirScreen() {
   const router = useRouter();
-  const [montirList, setMontirList] = useState<Montir[]>([
-    {
-      id: 1,
-      nama: "Ahmad Rifai",
-      no_telp: "081234567890",
-      email: "ahmad@example.com",
-    },
-    {
-      id: 2,
-      nama: "Budi Santoso",
-      no_telp: "082345678901",
-      email: "budi@example.com",
-    },
-  ]);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [montirList, setMontirList] = useState<MontirBengkelItem[]>([]);
+  const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     nama: "",
+    alamat: "",
     no_telp: "",
     email: "",
+    password: "",
+    password_confirmation: "",
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleAdd = () => {
+  // Load montir on mount
+  useEffect(() => {
+    loadMontir();
+  }, []);
+
+  const loadMontir = async () => {
+    try {
+      const response = await montirService.getMontirList();
+      if (response.status) {
+        setMontirList(response.data);
+      } else {
+        Alert.alert("Error", response.message || "Gagal memuat data montir");
+      }
+    } catch (error: any) {
+      console.error("Error loading montir:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal memuat data montir"
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadMontir();
+  };
+
+  const handleAdd = async () => {
+    // Validation
     if (
       !formData.nama.trim() ||
+      !formData.alamat.trim() ||
       !formData.no_telp.trim() ||
-      !formData.email.trim()
+      !formData.email.trim() ||
+      !formData.password.trim() ||
+      !formData.password_confirmation.trim()
     ) {
       Alert.alert("Error", "Semua field harus diisi");
       return;
     }
 
-    const newMontir: Montir = {
-      id: Date.now(),
-      ...formData,
-    };
-
-    setMontirList([...montirList, newMontir]);
-    setFormData({ nama: "", no_telp: "", email: "" });
-    setShowAddForm(false);
-    Alert.alert("Berhasil", "Montir berhasil ditambahkan");
-  };
-
-  const handleEdit = (montir: Montir) => {
-    setEditingId(montir.id);
-    setFormData({
-      nama: montir.nama,
-      no_telp: montir.no_telp,
-      email: montir.email,
-    });
-    setShowAddForm(true);
-  };
-
-  const handleSaveEdit = () => {
-    if (
-      !formData.nama.trim() ||
-      !formData.no_telp.trim() ||
-      !formData.email.trim()
-    ) {
-      Alert.alert("Error", "Semua field harus diisi");
+    if (formData.password !== formData.password_confirmation) {
+      Alert.alert("Error", "Konfirmasi password tidak cocok");
       return;
     }
 
-    setMontirList(
-      montirList.map((item) =>
-        item.id === editingId ? { ...item, ...formData } : item
-      )
-    );
-    setEditingId(null);
-    setFormData({ nama: "", no_telp: "", email: "" });
-    setShowAddForm(false);
-    Alert.alert("Berhasil", "Data montir berhasil diupdate");
+    if (formData.password.length < 8) {
+      Alert.alert("Error", "Password minimal 8 karakter");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await montirService.createMontir(formData);
+
+      if (response.status) {
+        // Reload list
+        await loadMontir();
+        setFormData({
+          nama: "",
+          alamat: "",
+          no_telp: "",
+          email: "",
+          password: "",
+          password_confirmation: "",
+        });
+        setShowAddForm(false);
+        Alert.alert("Berhasil", response.message);
+      } else {
+        Alert.alert("Error", response.message || "Gagal menambahkan montir");
+      }
+    } catch (error: any) {
+      console.error("Error adding montir:", error);
+
+      // Handle validation errors
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).flat().join("\n");
+        Alert.alert("Validation Error", errorMessages);
+      } else {
+        Alert.alert(
+          "Error",
+          error.response?.data?.message || "Gagal menambahkan montir"
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     Alert.alert("Konfirmasi", "Apakah Anda yakin ingin menghapus montir ini?", [
       { text: "Batal", style: "cancel" },
       {
         text: "Hapus",
         style: "destructive",
-        onPress: () => {
-          setMontirList(montirList.filter((item) => item.id !== id));
-          Alert.alert("Berhasil", "Montir berhasil dihapus");
+        onPress: async () => {
+          try {
+            const response = await montirService.deleteMontir(id);
+
+            if (response.status) {
+              // Remove from list
+              setMontirList(montirList.filter((item) => item.id !== id));
+              Alert.alert("Berhasil", response.message);
+            } else {
+              Alert.alert(
+                "Error",
+                response.message || "Gagal menghapus montir"
+              );
+            }
+          } catch (error: any) {
+            console.error("Error deleting montir:", error);
+            Alert.alert(
+              "Error",
+              error.response?.data?.message || "Gagal menghapus montir"
+            );
+          }
         },
       },
     ]);
@@ -114,8 +162,14 @@ export default function MontirScreen() {
 
   const handleCancel = () => {
     setShowAddForm(false);
-    setEditingId(null);
-    setFormData({ nama: "", no_telp: "", email: "" });
+    setFormData({
+      nama: "",
+      alamat: "",
+      no_telp: "",
+      email: "",
+      password: "",
+      password_confirmation: "",
+    });
   };
 
   return (
@@ -134,133 +188,190 @@ export default function MontirScreen() {
         </Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Add Button */}
-        {!showAddForm && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowAddForm(true)}
-          >
-            <Text style={styles.addButtonIcon}>➕</Text>
-            <Text style={styles.addButtonText}>Tambah Montir Baru</Text>
-          </TouchableOpacity>
-        )}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Memuat data montir...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[Colors.primary]}
+            />
+          }
+        >
+          {/* Add Button */}
+          {!showAddForm && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setShowAddForm(true)}
+            >
+              <Text style={styles.addButtonIcon}>➕</Text>
+              <Text style={styles.addButtonText}>Tambah Montir Baru</Text>
+            </TouchableOpacity>
+          )}
 
-        {/* Add/Edit Form */}
-        {showAddForm && (
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>
-              {editingId ? "Edit Montir" : "Tambah Montir Baru"}
+          {/* Add Form */}
+          {showAddForm && (
+            <View style={styles.formCard}>
+              <Text style={styles.formTitle}>Tambah Montir Baru</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nama Lengkap</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Masukkan nama lengkap"
+                  value={formData.nama}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, nama: text })
+                  }
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Alamat</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Masukkan alamat lengkap"
+                  value={formData.alamat}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, alamat: text })
+                  }
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>No. Telepon</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="08123456789"
+                  value={formData.no_telp}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, no_telp: text })
+                  }
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, email: text })
+                  }
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Minimal 8 karakter"
+                  value={formData.password}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, password: text })
+                  }
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Konfirmasi Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ulangi password"
+                  value={formData.password_confirmation}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, password_confirmation: text })
+                  }
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.formActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancel}
+                  disabled={submitting}
+                >
+                  <Text style={styles.cancelButtonText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.saveButton,
+                    submitting && styles.saveButtonDisabled,
+                  ]}
+                  onPress={handleAdd}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color={Colors.white} />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Simpan</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Montir List */}
+          <View style={styles.listSection}>
+            <Text style={styles.sectionTitle}>
+              Daftar Montir ({montirList.length})
             </Text>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nama Lengkap</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Masukkan nama lengkap"
-                value={formData.nama}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, nama: text })
-                }
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>No. Telepon</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="08123456789"
-                value={formData.no_telp}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, no_telp: text })
-                }
-                keyboardType="phone-pad"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="email@example.com"
-                value={formData.email}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, email: text })
-                }
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.formActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCancel}
-              >
-                <Text style={styles.cancelButtonText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={editingId ? handleSaveEdit : handleAdd}
-              >
-                <Text style={styles.saveButtonText}>
-                  {editingId ? "Update" : "Simpan"}
+            {montirList.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>👨‍🔧</Text>
+                <Text style={styles.emptyText}>Belum ada montir</Text>
+                <Text style={styles.emptySubtext}>
+                  Tambahkan montir yang bekerja di bengkel Anda
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Montir List */}
-        <View style={styles.listSection}>
-          <Text style={styles.sectionTitle}>
-            Daftar Montir ({montirList.length})
-          </Text>
-
-          {montirList.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>👨‍🔧</Text>
-              <Text style={styles.emptyText}>Belum ada montir</Text>
-              <Text style={styles.emptySubtext}>
-                Tambahkan montir yang bekerja di bengkel Anda
-              </Text>
-            </View>
-          ) : (
-            montirList.map((montir) => (
-              <View key={montir.id} style={styles.montirCard}>
-                <View style={styles.montirHeader}>
-                  <View style={styles.montirAvatar}>
-                    <Text style={styles.montirAvatarText}>
-                      {montir.nama.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.montirInfo}>
-                    <Text style={styles.montirName}>{montir.nama}</Text>
-                    <Text style={styles.montirContact}>
-                      📱 {montir.no_telp}
-                    </Text>
-                    <Text style={styles.montirContact}>✉️ {montir.email}</Text>
-                  </View>
-                </View>
-                <View style={styles.montirActions}>
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => handleEdit(montir)}
-                  >
-                    <Text style={styles.editButtonText}>✏️ Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDelete(montir.id)}
-                  >
-                    <Text style={styles.deleteButtonText}>🗑️ Hapus</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
-            ))
-          )}
-        </View>
-      </ScrollView>
+            ) : (
+              montirList.map((montir) => (
+                <View key={montir.id} style={styles.montirCard}>
+                  <View style={styles.montirHeader}>
+                    <View style={styles.montirAvatar}>
+                      <Text style={styles.montirAvatarText}>
+                        {montir.user.nama.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.montirInfo}>
+                      <Text style={styles.montirName}>{montir.user.nama}</Text>
+                      <Text style={styles.montirContact}>
+                        📱 {montir.user.no_telp}
+                      </Text>
+                      <Text style={styles.montirContact}>
+                        ✉️ {montir.user.email}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.montirActions}>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDelete(montir.id)}
+                    >
+                      <Text style={styles.deleteButtonText}>🗑️ Hapus</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -269,6 +380,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.text.secondary,
   },
   header: {
     backgroundColor: Colors.primary,
@@ -375,6 +497,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: "center",
   },
+  saveButtonDisabled: {
+    backgroundColor: Colors.gray[300],
+    opacity: 0.6,
+  },
   saveButtonText: {
     color: Colors.white,
     fontSize: 16,
@@ -438,18 +564,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: Colors.gray[200],
-  },
-  editButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: Colors.info + "20",
-    alignItems: "center",
-  },
-  editButtonText: {
-    color: Colors.info,
-    fontSize: 14,
-    fontWeight: "600",
   },
   deleteButton: {
     flex: 1,
