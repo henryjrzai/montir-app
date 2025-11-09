@@ -1,0 +1,441 @@
+/**
+ * Kelola Layanan Bengkel
+ */
+
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Colors } from "../../src/constants/colors";
+
+export default function LayananScreen() {
+  const router = useRouter();
+  const [layananList, setLayananList] = useState([
+    { id: 1, jenis_layanan: "Ganti Oli" },
+    { id: 2, jenis_layanan: "Servis Berkala" },
+    { id: 3, jenis_layanan: "Ganti Ban" },
+  ]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLayanan, setNewLayanan] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editLayanan, setEditLayanan] = useState("");
+
+  const handleAdd = () => {
+    if (!newLayanan.trim()) {
+      Alert.alert("Error", "Nama layanan tidak boleh kosong");
+      return;
+    }
+
+    const newItem = {
+      id: Date.now(),
+      jenis_layanan: newLayanan,
+    };
+
+    setLayananList([...layananList, newItem]);
+    setNewLayanan("");
+    setShowAddForm(false);
+    Alert.alert("Berhasil", "Layanan berhasil ditambahkan");
+  };
+
+  const handleEdit = (id: number) => {
+    const item = layananList.find((l) => l.id === id);
+    if (item) {
+      setEditingId(id);
+      setEditLayanan(item.jenis_layanan);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editLayanan.trim()) {
+      Alert.alert("Error", "Nama layanan tidak boleh kosong");
+      return;
+    }
+
+    setLayananList(
+      layananList.map((item) =>
+        item.id === editingId ? { ...item, jenis_layanan: editLayanan } : item
+      )
+    );
+    setEditingId(null);
+    setEditLayanan("");
+    Alert.alert("Berhasil", "Layanan berhasil diupdate");
+  };
+
+  const handleDelete = (id: number) => {
+    Alert.alert(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus layanan ini?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Hapus",
+          style: "destructive",
+          onPress: () => {
+            setLayananList(layananList.filter((item) => item.id !== id));
+            Alert.alert("Berhasil", "Layanan berhasil dihapus");
+          },
+        },
+      ]
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backButtonText}>← Kembali</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Kelola Layanan</Text>
+        <Text style={styles.subtitle}>
+          Atur layanan yang tersedia di bengkel Anda
+        </Text>
+      </View>
+
+      <ScrollView style={styles.content}>
+        {/* Add Button */}
+        {!showAddForm && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddForm(true)}
+          >
+            <Text style={styles.addButtonIcon}>➕</Text>
+            <Text style={styles.addButtonText}>Tambah Layanan Baru</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Add Form */}
+        {showAddForm && (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Tambah Layanan Baru</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nama layanan (contoh: Ganti Oli)"
+              value={newLayanan}
+              onChangeText={setNewLayanan}
+            />
+            <View style={styles.formActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setShowAddForm(false);
+                  setNewLayanan("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleAdd}>
+                <Text style={styles.saveButtonText}>Simpan</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Layanan List */}
+        <View style={styles.listSection}>
+          <Text style={styles.sectionTitle}>
+            Daftar Layanan ({layananList.length})
+          </Text>
+
+          {layananList.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>🔧</Text>
+              <Text style={styles.emptyText}>Belum ada layanan</Text>
+              <Text style={styles.emptySubtext}>
+                Tambahkan layanan yang tersedia di bengkel Anda
+              </Text>
+            </View>
+          ) : (
+            layananList.map((item) => (
+              <View key={item.id} style={styles.layananCard}>
+                {editingId === item.id ? (
+                  // Edit Mode
+                  <View style={styles.editForm}>
+                    <TextInput
+                      style={styles.editInput}
+                      value={editLayanan}
+                      onChangeText={setEditLayanan}
+                      autoFocus
+                    />
+                    <View style={styles.editActions}>
+                      <TouchableOpacity
+                        style={styles.editCancelButton}
+                        onPress={() => {
+                          setEditingId(null);
+                          setEditLayanan("");
+                        }}
+                      >
+                        <Text style={styles.editCancelText}>Batal</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.editSaveButton}
+                        onPress={handleSaveEdit}
+                      >
+                        <Text style={styles.editSaveText}>Simpan</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  // View Mode
+                  <>
+                    <View style={styles.layananInfo}>
+                      <Text style={styles.layananIcon}>🔧</Text>
+                      <Text style={styles.layananName}>
+                        {item.jenis_layanan}
+                      </Text>
+                    </View>
+                    <View style={styles.layananActions}>
+                      <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => handleEdit(item.id)}
+                      >
+                        <Text style={styles.editButtonText}>✏️</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDelete(item.id)}
+                      >
+                        <Text style={styles.deleteButtonText}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    backgroundColor: Colors.primary,
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 30,
+  },
+  backButton: {
+    marginBottom: 16,
+  },
+  backButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: Colors.white,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: Colors.white,
+    opacity: 0.9,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  addButton: {
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  addButtonIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  addButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  formCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  formActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: Colors.text.secondary,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  saveButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  listSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  layananCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  layananInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  layananIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  layananName: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.text.primary,
+    flex: 1,
+  },
+  layananActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  editButton: {
+    padding: 8,
+  },
+  editButtonText: {
+    fontSize: 20,
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  deleteButtonText: {
+    fontSize: 20,
+  },
+  editForm: {
+    flex: 1,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  editActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  editCancelButton: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    alignItems: "center",
+  },
+  editCancelText: {
+    color: Colors.text.secondary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  editSaveButton: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+  },
+  editSaveText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: "center",
+  },
+});

@@ -34,7 +34,7 @@ export default function BengkelHomeScreen() {
   // Function untuk load order list
   const loadOrders = useCallback(async () => {
     // Hanya load orders jika bengkel sudah verified
-    if (!bengkelData || bengkelData.verifikasi !== 1) {
+    if (!bengkelData || bengkelData.verifikasi !== "1") {
       return;
     }
 
@@ -87,7 +87,7 @@ export default function BengkelHomeScreen() {
 
   // Load orders ketika bengkel data berubah dan verified
   useEffect(() => {
-    if (bengkelData && bengkelData.verifikasi === 1) {
+    if (bengkelData && bengkelData.verifikasi === "1") {
       loadOrders();
     }
   }, [bengkelData, loadOrders]);
@@ -98,7 +98,7 @@ export default function BengkelHomeScreen() {
     try {
       await loadBengkelStatus();
       // Load orders juga saat refresh jika sudah verified
-      if (bengkelData && bengkelData.verifikasi === 1) {
+      if (bengkelData && bengkelData.verifikasi === "1") {
         await loadOrders();
       }
     } finally {
@@ -131,7 +131,7 @@ export default function BengkelHomeScreen() {
       <View style={styles.header}>
         <Text style={styles.greeting}>Selamat Datang! 🔧</Text>
         <Text style={styles.name}>{user?.nama}</Text>
-        <Text style={styles.role}>Bengkel</Text>
+        <Text style={styles.role}>{bengkelData?.nama || "Bengkel"}</Text>
       </View>
 
       <ScrollView
@@ -183,6 +183,31 @@ export default function BengkelHomeScreen() {
             </View>
           </View>
         )}
+
+        {/* Menu Navigasi  */}
+        <View style={styles.menuGrid}>
+          <TouchableOpacity
+            style={styles.menuCard}
+            onPress={() => router.push("/(bengkel)/layanan" as any)}
+          >
+            <View style={styles.menuIconContainer}>
+              <Text style={styles.menuIcon}>🔧</Text>
+            </View>
+            <Text style={styles.menuTitle}>Layanan</Text>
+            <Text style={styles.menuSubtitle}>Kelola layanan</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuCard}
+            onPress={() => router.push("/(bengkel)/montir" as any)}
+          >
+            <View style={styles.menuIconContainer}>
+              <Text style={styles.menuIcon}>👨‍🔧</Text>
+            </View>
+            <Text style={styles.menuTitle}>Montir</Text>
+            <Text style={styles.menuSubtitle}>Kelola montir</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Order List - Hanya tampil jika verified */}
         {currentBengkelStatus.isVerified && (
@@ -454,6 +479,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.secondary,
     lineHeight: 20,
+  },
+  // Menu Grid Styles
+  menuGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 5,
+    marginBottom: 10,
+    gap: 12,
+  },
+  menuCard: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+  },
+  menuIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.primary + "15",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  menuIcon: {
+    fontSize: 32,
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  menuSubtitle: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    textAlign: "center",
   },
   // Placeholder
   placeholder: {
