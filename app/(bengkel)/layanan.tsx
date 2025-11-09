@@ -3,9 +3,11 @@
  */
 
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,34 +16,79 @@ import {
   View,
 } from "react-native";
 import { Colors } from "../../src/constants/colors";
+import { layananService } from "../../src/services/layanan.service";
+import { LayananBengkelItem } from "../../src/types/layanan.types";
 
 export default function LayananScreen() {
   const router = useRouter();
-  const [layananList, setLayananList] = useState([
-    { id: 1, jenis_layanan: "Ganti Oli" },
-    { id: 2, jenis_layanan: "Servis Berkala" },
-    { id: 3, jenis_layanan: "Ganti Ban" },
-  ]);
+  const [layananList, setLayananList] = useState<LayananBengkelItem[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLayanan, setNewLayanan] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editLayanan, setEditLayanan] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleAdd = () => {
+  // Load layanan on mount
+  useEffect(() => {
+    loadLayanan();
+  }, []);
+
+  const loadLayanan = async () => {
+    try {
+      const response = await layananService.getLayananList();
+      if (response.status) {
+        setLayananList(response.data);
+      } else {
+        Alert.alert("Error", response.message || "Gagal memuat data layanan");
+      }
+    } catch (error: any) {
+      console.error("Error loading layanan:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal memuat data layanan"
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadLayanan();
+  };
+
+  const handleAdd = async () => {
     if (!newLayanan.trim()) {
       Alert.alert("Error", "Nama layanan tidak boleh kosong");
       return;
     }
 
-    const newItem = {
-      id: Date.now(),
-      jenis_layanan: newLayanan,
-    };
+    setSubmitting(true);
+    try {
+      // Call API to create layanan
+      const response = await layananService.createLayanan([newLayanan]);
 
-    setLayananList([...layananList, newItem]);
-    setNewLayanan("");
-    setShowAddForm(false);
-    Alert.alert("Berhasil", "Layanan berhasil ditambahkan");
+      if (response.status) {
+        // Update list with new data from server
+        setLayananList(response.data.layanan);
+        setNewLayanan("");
+        setShowAddForm(false);
+        Alert.alert("Berhasil", response.message);
+      } else {
+        Alert.alert("Error", response.message || "Gagal menambahkan layanan");
+      }
+    } catch (error: any) {
+      console.error("Error adding layanan:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal menambahkan layanan"
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = (id: number) => {
@@ -52,20 +99,44 @@ export default function LayananScreen() {
     }
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editLayanan.trim()) {
       Alert.alert("Error", "Nama layanan tidak boleh kosong");
       return;
     }
 
-    setLayananList(
-      layananList.map((item) =>
-        item.id === editingId ? { ...item, jenis_layanan: editLayanan } : item
-      )
-    );
-    setEditingId(null);
-    setEditLayanan("");
-    Alert.alert("Berhasil", "Layanan berhasil diupdate");
+    if (!editingId) return;
+
+    setSubmitting(true);
+    try {
+      // Call API to update layanan
+      const response = await layananService.updateLayanan(
+        editingId,
+        editLayanan
+      );
+
+      if (response.status) {
+        // Update list with updated data
+        setLayananList(
+          layananList.map((item) =>
+            item.id === editingId ? response.data : item
+          )
+        );
+        setEditingId(null);
+        setEditLayanan("");
+        Alert.alert("Berhasil", response.message);
+      } else {
+        Alert.alert("Error", response.message || "Gagal mengupdate layanan");
+      }
+    } catch (error: any) {
+      console.error("Error updating layanan:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal mengupdate layanan"
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -77,9 +148,28 @@ export default function LayananScreen() {
         {
           text: "Hapus",
           style: "destructive",
-          onPress: () => {
-            setLayananList(layananList.filter((item) => item.id !== id));
-            Alert.alert("Berhasil", "Layanan berhasil dihapus");
+          onPress: async () => {
+            try {
+              // Call API to delete layanan
+              const response = await layananService.deleteLayanan(id);
+
+              if (response.status) {
+                // Remove from list
+                setLayananList(layananList.filter((item) => item.id !== id));
+                Alert.alert("Berhasil", response.message);
+              } else {
+                Alert.alert(
+                  "Error",
+                  response.message || "Gagal menghapus layanan"
+                );
+              }
+            } catch (error: any) {
+              console.error("Error deleting layanan:", error);
+              Alert.alert(
+                "Error",
+                error.response?.data?.message || "Gagal menghapus layanan"
+              );
+            }
           },
         },
       ]
@@ -102,119 +192,159 @@ export default function LayananScreen() {
         </Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Add Button */}
-        {!showAddForm && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowAddForm(true)}
-          >
-            <Text style={styles.addButtonIcon}>➕</Text>
-            <Text style={styles.addButtonText}>Tambah Layanan Baru</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Add Form */}
-        {showAddForm && (
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Tambah Layanan Baru</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nama layanan (contoh: Ganti Oli)"
-              value={newLayanan}
-              onChangeText={setNewLayanan}
-            />
-            <View style={styles.formActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowAddForm(false);
-                  setNewLayanan("");
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAdd}>
-                <Text style={styles.saveButtonText}>Simpan</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Layanan List */}
-        <View style={styles.listSection}>
-          <Text style={styles.sectionTitle}>
-            Daftar Layanan ({layananList.length})
-          </Text>
-
-          {layananList.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🔧</Text>
-              <Text style={styles.emptyText}>Belum ada layanan</Text>
-              <Text style={styles.emptySubtext}>
-                Tambahkan layanan yang tersedia di bengkel Anda
-              </Text>
-            </View>
-          ) : (
-            layananList.map((item) => (
-              <View key={item.id} style={styles.layananCard}>
-                {editingId === item.id ? (
-                  // Edit Mode
-                  <View style={styles.editForm}>
-                    <TextInput
-                      style={styles.editInput}
-                      value={editLayanan}
-                      onChangeText={setEditLayanan}
-                      autoFocus
-                    />
-                    <View style={styles.editActions}>
-                      <TouchableOpacity
-                        style={styles.editCancelButton}
-                        onPress={() => {
-                          setEditingId(null);
-                          setEditLayanan("");
-                        }}
-                      >
-                        <Text style={styles.editCancelText}>Batal</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.editSaveButton}
-                        onPress={handleSaveEdit}
-                      >
-                        <Text style={styles.editSaveText}>Simpan</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ) : (
-                  // View Mode
-                  <>
-                    <View style={styles.layananInfo}>
-                      <Text style={styles.layananIcon}>🔧</Text>
-                      <Text style={styles.layananName}>
-                        {item.jenis_layanan}
-                      </Text>
-                    </View>
-                    <View style={styles.layananActions}>
-                      <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => handleEdit(item.id)}
-                      >
-                        <Text style={styles.editButtonText}>✏️</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDelete(item.id)}
-                      >
-                        <Text style={styles.deleteButtonText}>🗑️</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
-              </View>
-            ))
-          )}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Memuat data layanan...</Text>
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[Colors.primary]}
+            />
+          }
+        >
+          {/* Add Button */}
+          {!showAddForm && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setShowAddForm(true)}
+            >
+              <Text style={styles.addButtonIcon}>➕</Text>
+              <Text style={styles.addButtonText}>Tambah Layanan Baru</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Add Form */}
+          {showAddForm && (
+            <View style={styles.formCard}>
+              <Text style={styles.formTitle}>Tambah Layanan Baru</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nama layanan (contoh: Ganti Oli)"
+                value={newLayanan}
+                onChangeText={setNewLayanan}
+              />
+              <View style={styles.formActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowAddForm(false);
+                    setNewLayanan("");
+                  }}
+                  disabled={submitting}
+                >
+                  <Text style={styles.cancelButtonText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.saveButton,
+                    submitting && styles.saveButtonDisabled,
+                  ]}
+                  onPress={handleAdd}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color={Colors.white} />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Simpan</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Layanan List */}
+          <View style={styles.listSection}>
+            <Text style={styles.sectionTitle}>
+              Daftar Layanan ({layananList.length})
+            </Text>
+
+            {layananList.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>🔧</Text>
+                <Text style={styles.emptyText}>Belum ada layanan</Text>
+                <Text style={styles.emptySubtext}>
+                  Tambahkan layanan yang tersedia di bengkel Anda
+                </Text>
+              </View>
+            ) : (
+              layananList.map((item) => (
+                <View key={item.id} style={styles.layananCard}>
+                  {editingId === item.id ? (
+                    // Edit Mode
+                    <View style={styles.editForm}>
+                      <TextInput
+                        style={styles.editInput}
+                        value={editLayanan}
+                        onChangeText={setEditLayanan}
+                        autoFocus
+                      />
+                      <View style={styles.editActions}>
+                        <TouchableOpacity
+                          style={styles.editCancelButton}
+                          onPress={() => {
+                            setEditingId(null);
+                            setEditLayanan("");
+                          }}
+                          disabled={submitting}
+                        >
+                          <Text style={styles.editCancelText}>Batal</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.editSaveButton,
+                            submitting && styles.editSaveButtonDisabled,
+                          ]}
+                          onPress={handleSaveEdit}
+                          disabled={submitting}
+                        >
+                          {submitting ? (
+                            <ActivityIndicator
+                              size="small"
+                              color={Colors.white}
+                            />
+                          ) : (
+                            <Text style={styles.editSaveText}>Simpan</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    // View Mode
+                    <>
+                      <View style={styles.layananInfo}>
+                        <Text style={styles.layananIcon}>🔧</Text>
+                        <Text style={styles.layananName}>
+                          {item.jenis_layanan}
+                        </Text>
+                      </View>
+                      <View style={styles.layananActions}>
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          onPress={() => handleEdit(item.id)}
+                        >
+                          <Text style={styles.editButtonText}>✏️</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.deleteButton}
+                          onPress={() => handleDelete(item.id)}
+                        >
+                          <Text style={styles.deleteButtonText}>🗑️</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -223,6 +353,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.text.secondary,
   },
   header: {
     backgroundColor: Colors.primary,
@@ -320,6 +461,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: "center",
   },
+  saveButtonDisabled: {
+    backgroundColor: Colors.gray[300],
+    opacity: 0.6,
+  },
   saveButtonText: {
     color: Colors.white,
     fontSize: 16,
@@ -413,6 +558,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: Colors.primary,
     alignItems: "center",
+  },
+  editSaveButtonDisabled: {
+    backgroundColor: Colors.gray[300],
+    opacity: 0.6,
   },
   editSaveText: {
     color: Colors.white,
