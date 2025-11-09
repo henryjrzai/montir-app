@@ -15,8 +15,10 @@ import {
 import { Colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { BengkelService } from "../../src/services/bengkel.service";
+import { OrderService } from "../../src/services/order.service";
 import { StorageService } from "../../src/services/storage.service";
 import { BengkelData } from "../../src/types/bengkel.types";
+import { Order } from "../../src/types/order.types";
 import { checkBengkelStatus } from "../../src/utils/bengkelHelper";
 
 export default function BengkelHomeScreen() {
@@ -26,6 +28,28 @@ export default function BengkelHomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [bengkelData, setBengkelData] = useState<BengkelData | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Function untuk load order list
+  const loadOrders = useCallback(async () => {
+    // Hanya load orders jika bengkel sudah verified
+    if (!bengkelData || bengkelData.verifikasi !== 1) {
+      return;
+    }
+
+    try {
+      setLoadingOrders(true);
+      const response = await OrderService.getOrderList();
+      if (response.status === "success" && response.data) {
+        setOrders(response.data);
+      }
+    } catch (error: any) {
+      console.error("[BengkelHome] Failed to load orders:", error);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [bengkelData]);
 
   // Function untuk load status bengkel dari server
   const loadBengkelStatus = useCallback(async () => {
@@ -61,15 +85,26 @@ export default function BengkelHomeScreen() {
     }
   }, [user?.bengkel, loadBengkelStatus]);
 
+  // Load orders ketika bengkel data berubah dan verified
+  useEffect(() => {
+    if (bengkelData && bengkelData.verifikasi === 1) {
+      loadOrders();
+    }
+  }, [bengkelData, loadOrders]);
+
   // Handle pull to refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await loadBengkelStatus();
+      // Load orders juga saat refresh jika sudah verified
+      if (bengkelData && bengkelData.verifikasi === 1) {
+        await loadOrders();
+      }
     } finally {
       setRefreshing(false);
     }
-  }, [loadBengkelStatus]);
+  }, [loadBengkelStatus, loadOrders, bengkelData]);
 
   // Function untuk handle lengkapi data
   const handleLengkapiData = () => {
@@ -80,10 +115,10 @@ export default function BengkelHomeScreen() {
   const currentBengkelStatus = bengkelData
     ? {
         hasData: true,
-        isVerified: bengkelData.verifikasi === 1,
-        type: bengkelData.verifikasi === 1 ? "success" : "warning",
+        isVerified: bengkelData.verifikasi === "1",
+        type: bengkelData.verifikasi === "1" ? "success" : "warning",
         message:
-          bengkelData.verifikasi === 1
+          bengkelData.verifikasi === "1"
             ? "Bengkel Anda sudah terverifikasi dan dapat menerima orderan."
             : bengkelData.alasan_penolakan
             ? `Bengkel Anda ditolak: ${bengkelData.alasan_penolakan}`
@@ -149,26 +184,138 @@ export default function BengkelHomeScreen() {
           </View>
         )}
 
-        {/* Info Bengkel (jika sudah verified) */}
-        {currentBengkelStatus.isVerified && bengkelData && (
-          <View style={styles.infoCard}>
-            <View style={styles.verifiedBadge}>
-              <Text style={styles.verifiedIcon}>✓</Text>
-              <Text style={styles.verifiedText}>Terverifikasi</Text>
-            </View>
-            <Text style={styles.infoTitle}>{bengkelData.nama}</Text>
-            <Text style={styles.infoSubtitle}>{bengkelData.alamat}</Text>
+        {/* Order List - Hanya tampil jika verified */}
+        {currentBengkelStatus.isVerified && (
+          <View style={styles.orderSection}>
+            <Text style={styles.sectionTitle}>Orderan Masuk</Text>
+
+            {loadingOrders ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Memuat orderan...</Text>
+              </View>
+            ) : orders.length > 0 ? (
+              orders.slice(0, 10).map((order) => (
+                <View key={order.id} style={styles.orderCard}>
+                  {/* Order Header */}
+                  <View style={styles.orderHeader}>
+                    <View style={styles.orderIdContainer}>
+                      <Text style={styles.orderIdLabel}>Order #</Text>
+                      <Text style={styles.orderIdText}>{order.id}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        order.status === "menunggu" && styles.statusMenunggu,
+                        order.status === "kelokasi" && styles.statusKelokasi,
+                        order.status === "kerjakan" && styles.statusKerjakan,
+                        order.status === "selesai" && styles.statusSelesai,
+                        order.status === "batal" && styles.statusBatal,
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {order.status === "menunggu"
+                          ? "⏳ Menunggu"
+                          : order.status === "kelokasi"
+                          ? "🚗 Ke Lokasi"
+                          : order.status === "kerjakan"
+                          ? "🔧 Dikerjakan"
+                          : order.status === "selesai"
+                          ? "✅ Selesai"
+                          : "❌ Batal"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Layanan Info */}
+                  <View style={styles.orderContent}>
+                    <Text style={styles.layananText}>
+                      🔧 {order.layanan_bengkel.jenis_layanan}
+                    </Text>
+
+                    {/* Pelanggan Info */}
+                    <View style={styles.pelangganInfo}>
+                      <Text style={styles.pelangganLabel}>Pelanggan:</Text>
+                      <Text style={styles.pelangganNama}>
+                        {order.pelanggan.nama}
+                      </Text>
+                      <Text style={styles.pelangganTelp}>
+                        📱 {order.pelanggan.no_telp}
+                      </Text>
+                    </View>
+
+                    {/* Lokasi */}
+                    <View style={styles.lokasiInfo}>
+                      <Text style={styles.lokasiIcon}>📍</Text>
+                      <Text style={styles.lokasiText}>
+                        Lat: {parseFloat(order.latitude).toFixed(4)}, Long:{" "}
+                        {parseFloat(order.longitude).toFixed(4)}
+                      </Text>
+                    </View>
+
+                    {/* Harga */}
+                    {order.harga_layanan && (
+                      <View style={styles.hargaContainer}>
+                        <Text style={styles.hargaLabel}>Harga:</Text>
+                        <Text style={styles.hargaText}>
+                          Rp {order.harga_layanan.toLocaleString("id-ID")}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Payment Status */}
+                    <View style={styles.paymentStatus}>
+                      <Text
+                        style={[
+                          styles.paymentText,
+                          order.status_pembayaran === "lunas" &&
+                            styles.paymentLunas,
+                        ]}
+                      >
+                        {order.status_pembayaran === "lunas"
+                          ? "✓ Lunas"
+                          : "⏳ Belum Lunas"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Action Button */}
+                  {order.status === "menunggu" && (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        // TODO: Navigate to order detail
+                        console.log("View order detail:", order.id);
+                      }}
+                    >
+                      <Text style={styles.actionButtonText}>Lihat Detail</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyOrderContainer}>
+                <Text style={styles.emptyOrderIcon}>📦</Text>
+                <Text style={styles.emptyOrderText}>
+                  Belum ada orderan masuk
+                </Text>
+                <Text style={styles.emptyOrderSubtext}>
+                  Orderan baru akan muncul di sini
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
-        {/* Placeholder Content */}
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>
-            {refreshing
-              ? "Memperbarui status..."
-              : "Tarik ke bawah untuk refresh status bengkel"}
-          </Text>
-        </View>
+        {/* Placeholder - Hanya tampil jika belum verified */}
+        {!currentBengkelStatus.isVerified && (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>
+              {refreshing
+                ? "Memperbarui status..."
+                : "Tarik ke bawah untuk refresh status bengkel"}
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -315,6 +462,188 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   placeholderText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: "center",
+  },
+  // Order Section Styles
+  orderSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  // Order Card Styles
+  orderCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+  },
+  orderHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
+  },
+  orderIdContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  orderIdLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginRight: 4,
+  },
+  orderIdText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.primary,
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  statusMenunggu: {
+    backgroundColor: Colors.warning + "20",
+  },
+  statusKelokasi: {
+    backgroundColor: Colors.info + "20",
+  },
+  statusKerjakan: {
+    backgroundColor: Colors.primary + "20",
+  },
+  statusSelesai: {
+    backgroundColor: Colors.success + "20",
+  },
+  statusBatal: {
+    backgroundColor: Colors.error + "20",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.text.primary,
+  },
+  orderContent: {
+    marginBottom: 12,
+  },
+  layananText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  pelangganInfo: {
+    backgroundColor: Colors.gray[100],
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  pelangganLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginBottom: 4,
+  },
+  pelangganNama: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  pelangganTelp: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+  },
+  lokasiInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  lokasiIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  lokasiText: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    flex: 1,
+  },
+  hargaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  hargaLabel: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginRight: 8,
+  },
+  hargaText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.primary,
+  },
+  paymentStatus: {
+    marginTop: 4,
+  },
+  paymentText: {
+    fontSize: 13,
+    color: Colors.warning,
+    fontWeight: "500",
+  },
+  paymentLunas: {
+    color: Colors.success,
+  },
+  actionButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  actionButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyOrderContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyOrderIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyOrderText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptyOrderSubtext: {
     fontSize: 14,
     color: Colors.text.secondary,
     textAlign: "center",
