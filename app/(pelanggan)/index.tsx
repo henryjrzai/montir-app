@@ -103,10 +103,6 @@ export default function PelangganHomeScreen() {
       >
         {/* Search Section */}
         <View style={styles.searchSection}>
-          <Text style={styles.sectionTitle}>🔍 Cari Bengkel Terdekat</Text>
-          <Text style={styles.sectionSubtitle}>
-            Temukan bengkel terdekat berdasarkan layanan
-          </Text>
 
           <TouchableOpacity
             style={styles.searchCard}
