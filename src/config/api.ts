@@ -54,4 +54,9 @@ export const API_ENDPOINTS = {
   LIST_ORDERS: "/order/list",
   MONTIR_TO_LOCATION: "/order/montir/kelokasi",
   MONTIR_WORKING: "/order/montir/mengerjakan",
+  ORDER_HISTORY: "/order-layanan/order-history",
+  ORDER_DETAIL: "/order-layanan/detail-order",
+
+  // Pelanggan
+  CARI_BENGKEL: "/public/cari-bengkel",
 } as const;
