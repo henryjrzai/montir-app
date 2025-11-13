@@ -37,8 +37,12 @@ class HttpService {
 
         // Log request untuk debugging
         console.log(
-          `[HTTP Request] ${config.method?.toUpperCase()} ${config.url}`
+          `[HTTP Request] ${config.method?.toUpperCase()} ${config.baseURL}${
+            config.url
+          }`
         );
+        console.log("[HTTP Request Body]", config.data);
+        console.log("[HTTP Request Headers]", config.headers);
 
         return config;
       },
