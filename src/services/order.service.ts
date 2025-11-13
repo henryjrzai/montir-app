@@ -4,7 +4,12 @@
  */
 
 import { API_ENDPOINTS } from "../config/api";
-import { DetailOrderResponse, ListOrderResponse } from "../types/order.types";
+import {
+  AssignMontirRequest,
+  AssignMontirResponse,
+  DetailOrderResponse,
+  ListOrderResponse,
+} from "../types/order.types";
 import { httpService } from "./http.service";
 
 export const OrderService = {
@@ -51,6 +56,36 @@ export const OrderService = {
       return response;
     } catch (error: any) {
       console.error("[OrderService] Failed to fetch order detail:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Assign montir to order
+   * PUT /bengkel-management/order-layanan/assign-montir/{orderId}
+   * Body: { montir_id: number }
+   */
+  async assignMontir(
+    orderId: number,
+    data: AssignMontirRequest
+  ): Promise<AssignMontirResponse> {
+    try {
+      const url = `${API_ENDPOINTS.ASSIGN_MONTIR}/${orderId}`;
+      console.log("[OrderService] Assigning montir to order:", {
+        orderId,
+        montirId: data.montir_id,
+        endpoint: API_ENDPOINTS.ASSIGN_MONTIR,
+        fullUrl: url,
+        requestBody: data,
+      });
+
+      const response = await httpService.put<AssignMontirResponse>(url, data);
+
+      console.log("[OrderService] Montir assigned successfully");
+
+      return response;
+    } catch (error: any) {
+      console.error("[OrderService] Failed to assign montir:", error);
       throw error;
     }
   },

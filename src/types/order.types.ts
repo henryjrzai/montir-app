@@ -98,3 +98,13 @@ export interface DetailOrderResponse {
   status: string;
   data: OrderDetail;
 }
+
+export interface AssignMontirRequest {
+  montir_id: number;
+}
+
+export interface AssignMontirResponse {
+  status: string;
+  message: string;
+  data: OrderDetail;
+}

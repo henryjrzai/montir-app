@@ -37,6 +37,7 @@ export const API_ENDPOINTS = {
   CHECK_STATUS: "/bengkel-management/cek-validasi",
   LIST_ORDER_BENGKEL: "/bengkel-management/order-layanan/list-order-bengkel",
   DETAIL_ORDER_BENGKEL: "/order-layanan/detail-order",
+  ASSIGN_MONTIR: "/bengkel-management/order-layanan/assign-montir",
   LIST_LAYANAN_BENGKEL: "/bengkel-management/layanan-bengkel",
   CREATE_LAYANAN_BENGKEL: "/bengkel-management/daftar-layanan",
   UPDATE_LAYANAN_BENGKEL: "/bengkel-management/update-layanan",
@@ -51,7 +52,6 @@ export const API_ENDPOINTS = {
   DETAIL_REPAIRSHOP: "/services/repairshop/detail",
 
   // Orders
-  ASSIGN_MONTIR: "/order/bengkel/assign",
   LIST_ORDERS: "/order/list",
   MONTIR_TO_LOCATION: "/order/montir/kelokasi",
   MONTIR_WORKING: "/order/montir/mengerjakan",

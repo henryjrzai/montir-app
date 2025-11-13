@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Modal,
   Platform,
   RefreshControl,
   ScrollView,
@@ -18,7 +19,9 @@ import {
   View,
 } from "react-native";
 import { Colors } from "../../src/constants/colors";
+import { montirService } from "../../src/services/montir.service";
 import { OrderService } from "../../src/services/order.service";
+import { MontirBengkelItem } from "../../src/types/montir.types";
 import { OrderDetail } from "../../src/types/order.types";
 
 export default function BengkelOrderDetailScreen() {
@@ -29,6 +32,10 @@ export default function BengkelOrderDetailScreen() {
   const [orderData, setOrderData] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showMontirModal, setShowMontirModal] = useState(false);
+  const [montirList, setMontirList] = useState<MontirBengkelItem[]>([]);
+  const [loadingMontir, setLoadingMontir] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
   // Load order detail
   const loadOrderDetail = useCallback(async () => {
@@ -114,6 +121,72 @@ export default function BengkelOrderDetailScreen() {
         console.error("Failed to open phone:", error);
         Alert.alert("Error", "Gagal membuka aplikasi telepon");
       });
+  };
+
+  // Load daftar montir
+  const loadMontirList = useCallback(async () => {
+    try {
+      setLoadingMontir(true);
+      const response = await montirService.getMontirList();
+      if (response.status && response.data) {
+        setMontirList(response.data);
+      }
+    } catch (error: any) {
+      console.error("[OrderDetail] Failed to load montir:", error);
+      Alert.alert("Error", "Gagal memuat daftar montir");
+    } finally {
+      setLoadingMontir(false);
+    }
+  }, []);
+
+  // Handle assign montir
+  const handleAssignMontir = async (montir: MontirBengkelItem) => {
+    if (!orderData) return;
+
+    Alert.alert("Konfirmasi", `Tugaskan ${montir.user.nama} untuk order ini?`, [
+      {
+        text: "Batal",
+        style: "cancel",
+      },
+      {
+        text: "Ya, Tugaskan",
+        onPress: async () => {
+          try {
+            setAssigning(true);
+            const response = await OrderService.assignMontir(orderData.id, {
+              montir_id: montir.id,
+            });
+
+            if (response.status === "success") {
+              Alert.alert("Berhasil", response.message, [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    setShowMontirModal(false);
+                    loadOrderDetail(); // Reload order detail
+                  },
+                },
+              ]);
+            }
+          } catch (error: any) {
+            console.error("[OrderDetail] Failed to assign montir:", error);
+            Alert.alert(
+              "Error",
+              error.response?.data?.message ||
+                "Gagal menugaskan montir ke order"
+            );
+          } finally {
+            setAssigning(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  // Handle open modal terima order
+  const handleAcceptOrder = () => {
+    loadMontirList();
+    setShowMontirModal(true);
   };
 
   // Calculate total
@@ -377,25 +450,79 @@ export default function BengkelOrderDetailScreen() {
           <View style={styles.actionSection}>
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => {
-                // TODO: Implement accept order
-                Alert.alert("Info", "Fitur terima order akan segera hadir");
-              }}
+              onPress={handleAcceptOrder}
             >
               <Text style={styles.actionButtonText}>✓ Terima Order</Text>
             </TouchableOpacity>
-            {/* <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => {
-                // TODO: Implement reject order (SOON)
-                Alert.alert("Info", "Fitur tolak order akan segera hadir");
-              }}
-            >
-              <Text style={styles.actionButtonText}>✕ Tolak Order</Text>
-            </TouchableOpacity> */}
           </View>
         )}
       </ScrollView>
+
+      {/* Modal Pilih Montir */}
+      <Modal
+        visible={showMontirModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMontirModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Pilih Montir</Text>
+              <TouchableOpacity
+                onPress={() => setShowMontirModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {loadingMontir ? (
+              <View style={styles.modalLoading}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.modalLoadingText}>Memuat montir...</Text>
+              </View>
+            ) : montirList.length > 0 ? (
+              <ScrollView style={styles.montirListContainer}>
+                {montirList.map((montir) => (
+                  <TouchableOpacity
+                    key={montir.id}
+                    style={styles.montirCard}
+                    onPress={() => handleAssignMontir(montir)}
+                    disabled={assigning}
+                  >
+                    <View style={styles.montirAvatar}>
+                      <Text style={styles.montirAvatarText}>
+                        {montir.user.nama.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.montirInfoCard}>
+                      <Text style={styles.montirName}>{montir.user.nama}</Text>
+                      <Text style={styles.montirPhone}>
+                        📱 {montir.user.no_telp}
+                      </Text>
+                      <Text style={styles.montirEmail}>
+                        ✉️ {montir.user.email}
+                      </Text>
+                    </View>
+                    <Text style={styles.montirArrow}>→</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyMontir}>
+                <Text style={styles.emptyMontirIcon}>👨‍🔧</Text>
+                <Text style={styles.emptyMontirText}>
+                  Belum ada montir tersedia
+                </Text>
+                <Text style={styles.emptyMontirSubtext}>
+                  Tambahkan montir terlebih dahulu
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -714,5 +841,121 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: "bold",
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "80%",
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 16,
+    backgroundColor: Colors.gray[200],
+  },
+  modalCloseText: {
+    fontSize: 18,
+    color: Colors.text.secondary,
+  },
+  modalLoading: {
+    padding: 40,
+    alignItems: "center",
+  },
+  modalLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  montirListContainer: {
+    padding: 16,
+  },
+  montirCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.background,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+  },
+  montirAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  montirAvatarText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: Colors.white,
+  },
+  montirInfoCard: {
+    flex: 1,
+  },
+  montirName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  montirPhone: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+    marginBottom: 2,
+  },
+  montirEmail: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+  },
+  montirArrow: {
+    fontSize: 20,
+    color: Colors.text.secondary,
+    marginLeft: 8,
+  },
+  emptyMontir: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyMontirIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyMontirText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  emptyMontirSubtext: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: "center",
   },
 });
