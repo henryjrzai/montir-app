@@ -2,6 +2,7 @@
  * Beranda Montir
  */
 
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +20,7 @@ import { montirService } from "../../src/services/montir.service";
 import { MontirOrder } from "../../src/types/montir.types";
 
 export default function MontirHomeScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const bengkel = user?.bengkel || user?.montir?.bengkel;
   const [orders, setOrders] = useState<MontirOrder[]>([]);
@@ -66,9 +68,20 @@ export default function MontirHomeScreen() {
     return itemServicesTotal + Number(order.harga_layanan || 0);
   };
 
+  // Navigate to order detail
+  const handleOrderPress = (orderId: number) => {
+    router.push({
+      pathname: "/(montir)/order-detail",
+      params: { orderId: orderId.toString() },
+    });
+  };
+
   // Render order item
   const renderOrderItem = ({ item }: { item: MontirOrder }) => (
-    <TouchableOpacity style={styles.orderCard}>
+    <TouchableOpacity
+      style={styles.orderCard}
+      onPress={() => handleOrderPress(item.id)}
+    >
       <View style={styles.orderHeader}>
         <Text style={styles.orderId}>Order #{item.id}</Text>
         <View
@@ -147,6 +160,10 @@ export default function MontirHomeScreen() {
           </Text>
         </View>
       )}
+
+      <View style={styles.detailButtonContainer}>
+        <Text style={styles.detailButtonText}>Lihat Detail →</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -460,5 +477,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.secondary,
     textAlign: "center",
+  },
+  detailButtonContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray[200],
+    alignItems: "center",
+  },
+  detailButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.primary,
   },
 });
