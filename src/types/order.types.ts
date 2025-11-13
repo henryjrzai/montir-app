@@ -43,3 +43,58 @@ export interface ListOrderResponse {
   status: string;
   data: Order[];
 }
+
+export interface User {
+  id: number;
+  nama: string;
+  alamat: string;
+  no_telp: string;
+  email: string;
+  role: string;
+  foto: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Bengkel {
+  id: number;
+  user_id: number;
+  nama: string;
+  alamat: string;
+  latitude: string;
+  longitude: string;
+  verifikasi: number;
+  alasan_penolakan: string | null;
+  foto: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MontirDetail {
+  id: number;
+  bengkel_id: number;
+  user_id: number;
+  created_at: string;
+  updated_at: string;
+  user: User;
+  bengkel: Bengkel;
+}
+
+export interface ItemService {
+  id: number;
+  order_layanan_id: number;
+  nama_item: string;
+  harga: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderDetail extends Order {
+  montir?: MontirDetail | null;
+  item_service: ItemService[];
+}
+
+export interface DetailOrderResponse {
+  status: string;
+  data: OrderDetail;
+}

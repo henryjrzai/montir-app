@@ -304,17 +304,17 @@ export default function BengkelHomeScreen() {
                   </View>
 
                   {/* Action Button */}
-                  {order.status === "menunggu" && (
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => {
-                        // TODO: Navigate to order detail
-                        console.log("View order detail:", order.id);
-                      }}
-                    >
-                      <Text style={styles.actionButtonText}>Lihat Detail</Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      router.push({
+                        pathname: "/(bengkel)/order-detail",
+                        params: { orderId: order.id },
+                      } as any);
+                    }}
+                  >
+                    <Text style={styles.actionButtonText}>Lihat Detail</Text>
+                  </TouchableOpacity>
                 </View>
               ))
             ) : (

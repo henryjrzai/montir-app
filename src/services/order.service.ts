@@ -4,7 +4,7 @@
  */
 
 import { API_ENDPOINTS } from "../config/api";
-import { ListOrderResponse } from "../types/order.types";
+import { DetailOrderResponse, ListOrderResponse } from "../types/order.types";
 import { httpService } from "./http.service";
 
 export const OrderService = {
@@ -27,6 +27,30 @@ export const OrderService = {
       return response;
     } catch (error: any) {
       console.error("[OrderService] Failed to fetch orders:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get detail order
+   * GET /bengkel-management/order-layanan/detail-order/{orderId}
+   */
+  async getOrderDetail(orderId: number): Promise<DetailOrderResponse> {
+    try {
+      console.log("[OrderService] Fetching order detail:", orderId);
+
+      const response = await httpService.get<DetailOrderResponse>(
+        `${API_ENDPOINTS.DETAIL_ORDER_BENGKEL}/${orderId}`
+      );
+
+      console.log("[OrderService] Order detail fetched:", {
+        orderId: response.data?.id,
+        status: response.data?.status,
+      });
+
+      return response;
+    } catch (error: any) {
+      console.error("[OrderService] Failed to fetch order detail:", error);
       throw error;
     }
   },
