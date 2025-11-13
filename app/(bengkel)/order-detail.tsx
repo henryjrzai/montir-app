@@ -384,15 +384,15 @@ export default function BengkelOrderDetailScreen() {
             >
               <Text style={styles.actionButtonText}>✓ Terima Order</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={[styles.actionButton, styles.rejectButton]}
               onPress={() => {
-                // TODO: Implement reject order
+                // TODO: Implement reject order (SOON)
                 Alert.alert("Info", "Fitur tolak order akan segera hadir");
               }}
             >
               <Text style={styles.actionButtonText}>✕ Tolak Order</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         )}
       </ScrollView>
