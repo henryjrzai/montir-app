@@ -2,6 +2,7 @@
  * Detail Bengkel Page
  */
 
+import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -9,6 +10,7 @@ import {
   Alert,
   Image,
   Linking,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -18,7 +20,10 @@ import {
 } from "react-native";
 import { Colors } from "../../src/constants/colors";
 import { pelangganService } from "../../src/services/pelanggan.service";
-import { BengkelDetailData } from "../../src/types/pelanggan.types";
+import {
+  BengkelDetailData,
+  LayananBengkelItem,
+} from "../../src/types/pelanggan.types";
 
 export default function BengkelDetailScreen() {
   const router = useRouter();
@@ -29,6 +34,10 @@ export default function BengkelDetailScreen() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [selectedLayanan, setSelectedLayanan] =
+    useState<LayananBengkelItem | null>(null);
+  const [ordering, setOrdering] = useState(false);
 
   const loadBengkelDetail = useCallback(async () => {
     try {
@@ -57,9 +66,8 @@ export default function BengkelDetailScreen() {
   const openMaps = async () => {
     if (!bengkelData) return;
 
-    const { latitude, longitude, nama, alamat } = bengkelData.bengkel;
+    const { latitude, longitude, nama } = bengkelData.bengkel;
     const label = encodeURIComponent(nama);
-    const address = encodeURIComponent(alamat);
 
     // URL scheme untuk Google Maps
     const scheme = Platform.select({
@@ -84,6 +92,65 @@ export default function BengkelDetailScreen() {
         "Error",
         "Tidak dapat membuka Google Maps. Pastikan aplikasi terinstall."
       );
+    }
+  };
+
+  const handleOrderLayanan = (layanan: LayananBengkelItem) => {
+    setSelectedLayanan(layanan);
+    setShowOrderModal(true);
+  };
+
+  const confirmOrder = async () => {
+    if (!selectedLayanan) return;
+
+    try {
+      setOrdering(true);
+
+      // Get current location
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Izin Lokasi Diperlukan",
+          "Aplikasi memerlukan akses lokasi untuk membuat pesanan."
+        );
+        setOrdering(false);
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const response = await pelangganService.createOrder({
+        layanan_bengkel_id: selectedLayanan.id,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (response.status === "success") {
+        setShowOrderModal(false);
+        Alert.alert(
+          "Berhasil! 🎉",
+          `Pesanan ${selectedLayanan.jenis_layanan} berhasil dibuat!\n\nMontir akan segera menuju lokasi Anda.`,
+          [
+            {
+              text: "Lihat Riwayat",
+              onPress: () => router.push("/(pelanggan)/" as any),
+            },
+            { text: "OK" },
+          ]
+        );
+      } else {
+        Alert.alert("Error", response.message || "Gagal membuat pesanan");
+      }
+    } catch (error: any) {
+      console.error("Error creating order:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal membuat pesanan"
+      );
+    } finally {
+      setOrdering(false);
     }
   };
 
@@ -149,35 +216,97 @@ export default function BengkelDetailScreen() {
 
           <View style={styles.layananGrid}>
             {bengkelData.layanan.map((layanan) => (
-              <View key={layanan.id} style={styles.layananCard}>
+              <TouchableOpacity
+                key={layanan.id}
+                style={styles.layananCard}
+                onPress={() => handleOrderLayanan(layanan)}
+                activeOpacity={0.7}
+              >
                 <View style={styles.layananIconContainer}>
                   <Text style={styles.layananIcon}>🔧</Text>
                 </View>
                 <Text style={styles.layananText}>{layanan.jenis_layanan}</Text>
-              </View>
+                <Text style={styles.orderHint}>Tap untuk pesan</Text>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
 
         {/* Action Button */}
         <View style={styles.actionSection}>
-          <TouchableOpacity
-            style={styles.orderButton}
-            onPress={() => {
-              Alert.alert(
-                "Pemesanan",
-                "Fitur pemesanan layanan akan segera hadir!"
-              );
-            }}
-          >
-            <Text style={styles.orderButtonText}>📱 Pesan Layanan</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity style={styles.locationButton} onPress={openMaps}>
             <Text style={styles.locationButtonText}>🗺️ Lihat di Maps</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Order Modal */}
+      <Modal
+        visible={showOrderModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowOrderModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Konfirmasi Pesanan</Text>
+
+            {selectedLayanan && (
+              <>
+                <View style={styles.modalLayananInfo}>
+                  <View style={styles.modalLayananIcon}>
+                    <Text style={styles.modalIconText}>🔧</Text>
+                  </View>
+                  <View style={styles.modalLayananText}>
+                    <Text style={styles.modalLayananName}>
+                      {selectedLayanan.jenis_layanan}
+                    </Text>
+                    <Text style={styles.modalBengkelName}>
+                      {bengkelData?.bengkel.nama}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.modalInfo}>
+                  <Text style={styles.modalInfoText}>
+                    📍 Lokasi Anda saat ini akan digunakan untuk pemesanan
+                  </Text>
+                  <Text style={styles.modalInfoText}>
+                    🚗 Montir akan segera menuju lokasi Anda
+                  </Text>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => setShowOrderModal(false)}
+                    disabled={ordering}
+                  >
+                    <Text style={styles.modalCancelText}>Batal</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.modalConfirmButton,
+                      ordering && styles.modalConfirmButtonDisabled,
+                    ]}
+                    onPress={confirmOrder}
+                    disabled={ordering}
+                  >
+                    {ordering ? (
+                      <ActivityIndicator size="small" color={Colors.white} />
+                    ) : (
+                      <Text style={styles.modalConfirmText}>
+                        Konfirmasi Pesanan
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -313,25 +442,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
   },
+  orderHint: {
+    fontSize: 11,
+    color: Colors.primary,
+    marginTop: 8,
+    fontWeight: "500",
+  },
   actionSection: {
     padding: 20,
     gap: 12,
-  },
-  orderButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  orderButtonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: "bold",
   },
   locationButton: {
     backgroundColor: Colors.white,
@@ -345,5 +464,101 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
     fontWeight: "bold",
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalLayananInfo: {
+    flexDirection: "row",
+    backgroundColor: Colors.primary + "10",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  modalLayananIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.primary + "30",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  modalIconText: {
+    fontSize: 28,
+  },
+  modalLayananText: {
+    flex: 1,
+  },
+  modalLayananName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  modalBengkelName: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  modalInfo: {
+    backgroundColor: Colors.background,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    gap: 8,
+  },
+  modalInfoText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: Colors.gray[200],
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.secondary,
+  },
+  modalConfirmButton: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: Colors.primary,
+  },
+  modalConfirmButtonDisabled: {
+    backgroundColor: Colors.gray[400],
+  },
+  modalConfirmText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.white,
   },
 });

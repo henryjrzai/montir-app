@@ -165,3 +165,26 @@ export interface BengkelDetailResponse {
   message: string;
   data: BengkelDetailData;
 }
+
+// Create Order Types
+export interface CreateOrderRequest {
+  layanan_bengkel_id: number;
+  latitude: number;
+  longitude: number;
+}
+
+export interface CreateOrderData {
+  id: number;
+  layanan_bengkel_id: number;
+  pelanggan_id: number;
+  latitude: number;
+  longitude: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateOrderResponse {
+  status: string;
+  message: string;
+  data: CreateOrderData;
+}

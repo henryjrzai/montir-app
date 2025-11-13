@@ -8,6 +8,8 @@ import {
   BengkelDetailResponse,
   BengkelSearchRequest,
   BengkelSearchResponse,
+  CreateOrderRequest,
+  CreateOrderResponse,
   OrderDetailResponse,
   OrderHistoryResponse,
 } from "../types/pelanggan.types";
@@ -53,6 +55,17 @@ export const pelangganService = {
   async getBengkelDetail(bengkelId: number): Promise<BengkelDetailResponse> {
     const response = await httpService.get<BengkelDetailResponse>(
       `${API_ENDPOINTS.DETAIL_BENGKEL}/${bengkelId}`
+    );
+    return response;
+  },
+
+  /**
+   * Create order for layanan
+   */
+  async createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
+    const response = await httpService.post<CreateOrderResponse>(
+      API_ENDPOINTS.BUAT_ORDER,
+      data
     );
     return response;
   },
