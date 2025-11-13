@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -51,6 +53,39 @@ export default function BengkelDetailScreen() {
       setLoading(false);
     }
   }, [bengkelId, router]);
+
+  const openMaps = async () => {
+    if (!bengkelData) return;
+
+    const { latitude, longitude, nama, alamat } = bengkelData.bengkel;
+    const label = encodeURIComponent(nama);
+    const address = encodeURIComponent(alamat);
+
+    // URL scheme untuk Google Maps
+    const scheme = Platform.select({
+      ios: `maps:0,0?q=${latitude},${longitude}(${label})`,
+      android: `geo:0,0?q=${latitude},${longitude}(${label})`,
+    });
+
+    // Fallback ke browser jika app tidak terinstall
+    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}&query_place_id=${label}`;
+
+    try {
+      const supported = await Linking.canOpenURL(scheme!);
+      if (supported) {
+        await Linking.openURL(scheme!);
+      } else {
+        // Buka di browser
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error("Error opening maps:", error);
+      Alert.alert(
+        "Error",
+        "Tidak dapat membuka Google Maps. Pastikan aplikasi terinstall."
+      );
+    }
+  };
 
   useEffect(() => {
     loadBengkelDetail();
@@ -100,13 +135,6 @@ export default function BengkelDetailScreen() {
               <Text style={styles.infoIcon}>📍</Text>
               <Text style={styles.infoText}>{bengkelData.bengkel.alamat}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>📌</Text>
-              <Text style={styles.coordinateText}>
-                Lat: {bengkelData.bengkel.latitude}, Long:{" "}
-                {bengkelData.bengkel.longitude}
-              </Text>
-            </View>
           </View>
         </View>
 
@@ -145,15 +173,7 @@ export default function BengkelDetailScreen() {
             <Text style={styles.orderButtonText}>📱 Pesan Layanan</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.locationButton}
-            onPress={() => {
-              Alert.alert(
-                "Lokasi",
-                `Koordinat:\nLat: ${bengkelData.bengkel.latitude}\nLong: ${bengkelData.bengkel.longitude}\n\nFitur navigasi akan segera hadir!`
-              );
-            }}
-          >
+          <TouchableOpacity style={styles.locationButton} onPress={openMaps}>
             <Text style={styles.locationButtonText}>🗺️ Lihat di Maps</Text>
           </TouchableOpacity>
         </View>
