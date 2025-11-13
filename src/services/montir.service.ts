@@ -9,6 +9,7 @@ import {
   CreateMontirResponse,
   DeleteMontirResponse,
   ListMontirResponse,
+  MontirOrderListResponse,
 } from "../types/montir.types";
 import { httpService } from "./http.service";
 
@@ -42,5 +43,28 @@ export const montirService = {
       `${API_ENDPOINTS.DELETE_MONTIR_BENGKEL}/${id}`
     );
     return response;
+  },
+
+  /**
+   * Get list order layanan untuk montir
+   * GET /montir/order-layanan/{montirId}
+   */
+  async getMontirOrderList(montirId: number): Promise<MontirOrderListResponse> {
+    try {
+      console.log("[MontirService] Fetching montir orders:", montirId);
+
+      const response = await httpService.get<MontirOrderListResponse>(
+        `${API_ENDPOINTS.MONTIR_ORDER_LIST}/${montirId}`
+      );
+
+      console.log("[MontirService] Montir orders fetched:", {
+        count: response.data?.length || 0,
+      });
+
+      return response;
+    } catch (error: any) {
+      console.error("[MontirService] Failed to fetch montir orders:", error);
+      throw error;
+    }
   },
 };

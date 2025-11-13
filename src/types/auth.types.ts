@@ -32,6 +32,15 @@ export interface Bengkel {
   updated_at: string;
 }
 
+export interface Montir {
+  id: number;
+  bengkel_id: number;
+  user_id: number;
+  created_at: string;
+  updated_at: string;
+  bengkel: Bengkel;
+}
+
 export interface User {
   id: number;
   nama: string;
@@ -40,7 +49,8 @@ export interface User {
   no_telp: string;
   role: string;
   foto?: string | null;
-  bengkel?: Bengkel; // Data bengkel jika role = bengkel
+  bengkel?: Bengkel; // Data bengkel jika role = bengkel atau montir
+  montir?: Montir; // Data montir jika role = montir
   created_at?: string;
   updated_at?: string;
 }
