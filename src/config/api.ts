@@ -59,4 +59,5 @@ export const API_ENDPOINTS = {
 
   // Pelanggan
   CARI_BENGKEL: "/public/cari-bengkel",
+  DETAIL_BENGKEL: "/public/detail-bengkel",
 } as const;

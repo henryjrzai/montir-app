@@ -5,6 +5,7 @@
 
 import { API_ENDPOINTS } from "../config/api";
 import {
+  BengkelDetailResponse,
   BengkelSearchRequest,
   BengkelSearchResponse,
   OrderDetailResponse,
@@ -42,6 +43,16 @@ export const pelangganService = {
   async getOrderDetail(orderId: number): Promise<OrderDetailResponse> {
     const response = await httpService.get<OrderDetailResponse>(
       `${API_ENDPOINTS.ORDER_DETAIL}/${orderId}`
+    );
+    return response;
+  },
+
+  /**
+   * Get bengkel detail by ID
+   */
+  async getBengkelDetail(bengkelId: number): Promise<BengkelDetailResponse> {
+    const response = await httpService.get<BengkelDetailResponse>(
+      `${API_ENDPOINTS.DETAIL_BENGKEL}/${bengkelId}`
     );
     return response;
   },

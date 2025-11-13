@@ -136,3 +136,32 @@ export interface OrderDetailResponse {
   status: string;
   data: OrderDetail;
 }
+
+// Bengkel Detail Types
+export interface BengkelDetailInfo {
+  id: number;
+  nama: string;
+  alamat: string;
+  latitude: string;
+  longitude: string;
+  foto: string;
+}
+
+export interface LayananBengkelItem {
+  id: number;
+  bengkel_id: number;
+  jenis_layanan: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BengkelDetailData {
+  bengkel: BengkelDetailInfo;
+  layanan: LayananBengkelItem[];
+}
+
+export interface BengkelDetailResponse {
+  status: boolean;
+  message: string;
+  data: BengkelDetailData;
+}

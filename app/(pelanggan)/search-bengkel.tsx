@@ -140,11 +140,7 @@ export default function SearchBengkelScreen() {
   };
 
   const handleBengkelPress = (bengkel: BengkelSearchItem) => {
-    // TODO: Navigate to bengkel detail or order creation page
-    Alert.alert(
-      bengkel.nama,
-      `Alamat: ${bengkel.alamat}\nJarak: ${bengkel.jarak}\n\nFitur pemesanan akan segera hadir!`
-    );
+    router.push(`/(pelanggan)/bengkel-detail?bengkelId=${bengkel.id}` as any);
   };
 
   return (
