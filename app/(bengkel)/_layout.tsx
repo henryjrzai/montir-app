@@ -37,6 +37,8 @@ export default function BengkelLayout() {
       <Tabs.Screen name="order-detail" options={{ href: null }} />
       <Tabs.Screen name="montir" options={{ href: null }} />
       <Tabs.Screen name="setup-bengkel" options={{ href: null }} />
+      <Tabs.Screen name="update-profile" options={{ href: null }} />
+      <Tabs.Screen name="change-password" options={{ href: null }} />
     </Tabs>
   );
 }
