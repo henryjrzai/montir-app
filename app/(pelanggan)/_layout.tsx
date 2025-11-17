@@ -60,6 +60,12 @@ export default function PelangganLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="change-password"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

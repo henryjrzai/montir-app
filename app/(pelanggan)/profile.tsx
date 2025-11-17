@@ -156,7 +156,7 @@ export default function PelangganProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionRow}
-          onPress={() => handleActionPress("Ubah Password")}
+          onPress={() => router.push("/(pelanggan)/change-password")}
         >
           <Text style={styles.actionIcon}>🔒</Text>
           <Text style={styles.actionText}>Ubah Password</Text>

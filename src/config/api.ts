@@ -22,7 +22,7 @@ export const API_ENDPOINTS = {
   GET_PROFILE: "/profil",
   UPDATE_PROFILE: "/profil/update",
   UPDATE_PHOTO: "/profil/update/foto",
-  CHANGE_PASSWORD: "/profil/update/password",
+  CHANGE_PASSWORD: "/profil/change-password",
 
   // Montir
   ADD_MONTIR: "/montir/add",

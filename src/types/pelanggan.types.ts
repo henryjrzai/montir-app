@@ -223,3 +223,18 @@ export interface UpdateProfileResponse {
   message: string;
   data: ProfileUser;
 }
+
+export interface ChangePasswordRequest {
+  password_lama: string;
+  password_baru: string;
+  password_baru_confirmation: string;
+}
+
+export interface ChangePasswordResponse {
+  status: boolean;
+  message: string;
+  errors?: {
+    password_baru?: string[];
+    password_lama?: string[];
+  };
+}

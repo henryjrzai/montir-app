@@ -8,6 +8,8 @@ import {
   BengkelDetailResponse,
   BengkelSearchRequest,
   BengkelSearchResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   CreateOrderRequest,
   CreateOrderResponse,
   OrderDetailResponse,
@@ -91,6 +93,19 @@ export const pelangganService = {
   ): Promise<UpdateProfileResponse> {
     const response = await httpService.put<UpdateProfileResponse>(
       API_ENDPOINTS.UPDATE_PROFILE,
+      data
+    );
+    return response;
+  },
+
+  /**
+   * Change user password
+   */
+  async changePassword(
+    data: ChangePasswordRequest
+  ): Promise<ChangePasswordResponse> {
+    const response = await httpService.put<ChangePasswordResponse>(
+      API_ENDPOINTS.CHANGE_PASSWORD,
       data
     );
     return response;
