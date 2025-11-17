@@ -126,23 +126,6 @@ export default function MontirHomeScreen() {
           <Text style={styles.infoValue}>{item.pelanggan.no_telp}</Text>
         </View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>📍 Lokasi:</Text>
-          <Text style={styles.infoValue}>
-            {parseFloat(item.latitude).toFixed(4)},{" "}
-            {parseFloat(item.longitude).toFixed(4)}
-          </Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>Total:</Text>
-          <Text style={styles.priceValue}>
-            Rp {calculateTotal(item).toLocaleString("id-ID")}
-          </Text>
-        </View>
-
         {item.status_pembayaran === "lunas" && (
           <View style={styles.paymentBadge}>
             <Text style={styles.paymentText}>✓ Lunas</Text>

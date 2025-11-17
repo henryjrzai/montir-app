@@ -89,4 +89,32 @@ export const OrderService = {
       throw error;
     }
   },
+
+  /**
+   * Update order status to "kelokasi"
+   * PUT /bengkel-management/order-layanan/update/kelokasi/{orderId}
+   */
+  async updateStatusToKeLokasi(
+    orderId: number
+  ): Promise<AssignMontirResponse> {
+    try {
+      const url = `${API_ENDPOINTS.UPDATE_ORDER_STATUS_KELOKASI}/${orderId}`;
+      console.log("[OrderService] Updating status to 'kelokasi':", {
+        orderId,
+        fullUrl: url,
+      });
+
+      const response = await httpService.put<AssignMontirResponse>(url, {});
+
+      console.log("[OrderService] Status updated to 'kelokasi' successfully");
+
+      return response;
+    } catch (error: any) {
+      console.error(
+        "[OrderService] Failed to update status to 'kelokasi':",
+        error
+      );
+      throw error;
+    }
+  },
 };

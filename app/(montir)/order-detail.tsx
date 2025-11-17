@@ -29,6 +29,7 @@ export default function MontirOrderDetailScreen() {
   const [orderData, setOrderData] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Load order detail
   const loadOrderDetail = useCallback(async () => {
@@ -65,6 +66,46 @@ export default function MontirOrderDetailScreen() {
     await loadOrderDetail();
     setRefreshing(false);
   }, [loadOrderDetail]);
+
+  // Update status to 'kelokasi'
+  const handleUpdateStatusKeLokasi = async () => {
+    if (isUpdating) return;
+
+    Alert.alert(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin mengubah status menjadi 'Ke Lokasi'?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya",
+          onPress: async () => {
+            setIsUpdating(true);
+            try {
+              const response = await OrderService.updateStatusToKeLokasi(
+                Number(orderId)
+              );
+              if (response.status && response.data) {
+                Alert.alert("Sukses", "Status order berhasil diubah.");
+                await onRefresh();
+              }
+            } catch (error: any) {
+              console.error(
+                "[MontirOrderDetail] Failed to update status:",
+                error
+              );
+              Alert.alert(
+                "Error",
+                error.response?.data?.message ||
+                  "Gagal mengubah status order."
+              );
+            } finally {
+              setIsUpdating(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Open Google Maps dengan koordinat order
   const openMaps = () => {
@@ -365,6 +406,65 @@ export default function MontirOrderDetailScreen() {
             </View>
           </View>
         </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtonContainer}>
+          {orderData.status === "menunggu" && (
+            <TouchableOpacity
+              style={[
+                styles.mapsButton,
+                { backgroundColor: Colors.info },
+                isUpdating && styles.disabledButton,
+              ]}
+              onPress={handleUpdateStatusKeLokasi}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.mapsButtonText}>🚗 Ke Lokasi</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {orderData.status === "kelokasi" && (
+            <TouchableOpacity
+              style={[styles.mapsButton, { backgroundColor: Colors.primary }]}
+              onPress={() => {
+                // TODO: Implement API call to change status to 'kerjakan'
+                Alert.alert(
+                  "Konfirmasi",
+                  "Apakah Anda yakin ingin mengubah status menjadi 'Dikerjakan'?",
+                  [
+                    { text: "Batal", style: "cancel" },
+                    {
+                      text: "Ya",
+                      onPress: () =>
+                        console.log("Change status to kerjakan"),
+                    },
+                  ]
+                );
+              }}
+            >
+              <Text style={styles.mapsButtonText}>🔧 Kerjakan</Text>
+            </TouchableOpacity>
+          )}
+
+          {orderData.status === "kerjakan" && (
+            <TouchableOpacity
+              style={[styles.mapsButton, { backgroundColor: Colors.success }]}
+              onPress={() => {
+                // TODO: Implement API call to change status to 'selesai'
+                Alert.alert("Konfirmasi", "Apakah Anda yakin ingin mengubah status menjadi 'Selesai'?", [
+                  { text: "Batal", style: "cancel" },
+                  { text: "Ya", onPress: () => console.log("Change status to selesai") },
+                ]);
+              }}
+            >
+              <Text style={styles.mapsButtonText}>✅ Selesai</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -664,5 +764,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: Colors.text.primary,
+  },
+  actionButtonContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray[200],
+  },
+  disabledButton: {
+    backgroundColor: Colors.gray[400],
   },
 });

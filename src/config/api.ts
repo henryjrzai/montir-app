@@ -39,6 +39,8 @@ export const API_ENDPOINTS = {
   LIST_ORDER_BENGKEL: "/bengkel-management/order-layanan/list-order-bengkel",
   DETAIL_ORDER_BENGKEL: "/order-layanan/detail-order",
   ASSIGN_MONTIR: "/bengkel-management/order-layanan/assign-montir",
+  UPDATE_ORDER_STATUS_KELOKASI:
+    "/bengkel-management/order-layanan/update/kelokasi",
   LIST_LAYANAN_BENGKEL: "/bengkel-management/layanan-bengkel",
   CREATE_LAYANAN_BENGKEL: "/bengkel-management/daftar-layanan",
   UPDATE_LAYANAN_BENGKEL: "/bengkel-management/update-layanan",
