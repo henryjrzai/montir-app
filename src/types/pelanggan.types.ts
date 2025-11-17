@@ -208,6 +208,7 @@ export interface ProfileResponse {
   message: string;
   data: {
     user: ProfileUser;
+    bengkel?: any | null;
   };
 }
 

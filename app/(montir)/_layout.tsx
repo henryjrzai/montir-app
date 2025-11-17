@@ -40,6 +40,20 @@ export default function MontirLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="update-profile"
+        options={{
+          title: "Ubah Profil",
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="change-password"
+        options={{
+          title: "Ubah Password",
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
