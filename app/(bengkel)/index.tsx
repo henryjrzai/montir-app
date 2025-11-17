@@ -70,7 +70,7 @@ export default function BengkelHomeScreen() {
         );
       }
     } catch (error: any) {
-      console.error("[BengkelHome] Failed to load status:", error);
+      // console.error("[BengkelHome] Failed to load status:", error);
       // Jika error, gunakan data dari user context
       if (user?.bengkel) {
         setBengkelData(user.bengkel as any);

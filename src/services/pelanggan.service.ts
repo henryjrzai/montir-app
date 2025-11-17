@@ -12,6 +12,7 @@ import {
   CreateOrderResponse,
   OrderDetailResponse,
   OrderHistoryResponse,
+  ProfileResponse,
 } from "../types/pelanggan.types";
 import { httpService } from "./http.service";
 
@@ -66,6 +67,16 @@ export const pelangganService = {
     const response = await httpService.post<CreateOrderResponse>(
       API_ENDPOINTS.BUAT_ORDER,
       data
+    );
+    return response;
+  },
+
+  /**
+   * Get user profile
+   */
+  async getProfile(): Promise<ProfileResponse> {
+    const response = await httpService.get<ProfileResponse>(
+      API_ENDPOINTS.GET_PROFILE
     );
     return response;
   },

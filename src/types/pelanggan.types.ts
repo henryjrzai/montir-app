@@ -188,3 +188,25 @@ export interface CreateOrderResponse {
   message: string;
   data: CreateOrderData;
 }
+
+export interface ProfileUser {
+  id: number;
+  nama: string;
+  alamat: string;
+  no_telp: string;
+  email: string;
+  role: string;
+  foto: string | null;
+  created_at: string;
+  updated_at: string;
+  bengkel: any | null;
+  montir: any[];
+}
+
+export interface ProfileResponse {
+  status: boolean;
+  message: string;
+  data: {
+    user: ProfileUser;
+  };
+}
