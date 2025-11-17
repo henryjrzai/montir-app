@@ -110,4 +110,29 @@ export const pelangganService = {
     );
     return response;
   },
+
+  /**
+   * Update user profile photo
+   */
+  async updateProfilePhoto(
+    imageUri: string
+  ): Promise<UpdateProfileResponse> {
+    const formData = new FormData();
+
+    const uriParts = imageUri.split(".");
+    const fileType = uriParts[uriParts.length - 1];
+    const fileName = imageUri.split("/").pop();
+
+    formData.append("foto", {
+      uri: imageUri,
+      name: fileName,
+      type: `image/${fileType}`,
+    } as any);
+
+    const response = await httpService.postFormData<UpdateProfileResponse>(
+      API_ENDPOINTS.UPDATE_PHOTO,
+      formData
+    );
+    return response;
+  },
 };

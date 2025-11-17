@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { API_CONFIG } from "../../src/config/api";
 import { Colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/contexts/AuthContext";
@@ -24,11 +25,12 @@ import { ProfileUser } from "../../src/types/pelanggan.types";
 
 export default function PelangganProfileScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, updateUser } = useAuth();
 
   const [profile, setProfile] = useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -81,21 +83,60 @@ export default function PelangganProfileScreen() {
     });
   };
 
+  const handleChoosePhoto = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert(
+        "Izin Diperlukan",
+        "Anda harus memberikan izin untuk mengakses galeri foto."
+      );
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (pickerResult.canceled) {
+      return;
+    }
+
+    if (pickerResult.assets && pickerResult.assets.length > 0) {
+      const imageUri = pickerResult.assets[0].uri;
+      setIsUploading(true);
+      try {
+        const response = await pelangganService.updateProfilePhoto(imageUri);
+        if (response.status && response.data) {
+          await updateUser(response.data);
+          await loadProfile();
+          Alert.alert("Sukses", "Foto profil berhasil diperbarui.");
+        }
+      } catch (error: any) {
+        console.error("Failed to upload photo:", error);
+        Alert.alert("Error", "Gagal mengunggah foto.");
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   const handleActionPress = (action: string) => {
     Alert.alert("Informasi", `Fitur "${action}" sedang dalam pengembangan.`);
   };
 
   const getImageUrl = () => {
     if (profile?.foto) {
-      // Remove /api from base url
       const baseUrl = API_CONFIG.BASE_URL.replace("/api", "");
       return `${baseUrl}/${profile.foto}`;
     }
-    // Return a placeholder image if no photo is available
     return "https://via.placeholder.com/100";
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -117,7 +158,14 @@ export default function PelangganProfileScreen() {
     >
       {/* Header Section */}
       <View style={styles.header}>
-        <Image source={{ uri: getImageUrl() }} style={styles.profileImage} />
+        <View style={styles.profileImageContainer}>
+          <Image source={{ uri: getImageUrl() }} style={styles.profileImage} />
+          {isUploading && (
+            <View style={styles.uploadingOverlay}>
+              <ActivityIndicator size="large" color={Colors.white} />
+            </View>
+          )}
+        </View>
         <Text style={styles.name}>{profile?.nama || "Nama Pengguna"}</Text>
         <Text style={styles.email}>{profile?.email || "email@pengguna.com"}</Text>
       </View>
@@ -138,18 +186,12 @@ export default function PelangganProfileScreen() {
       {/* Actions Section */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Aksi</Text>
-        <TouchableOpacity
-          style={styles.actionRow}
-          onPress={handleUbahProfil}
-        >
+        <TouchableOpacity style={styles.actionRow} onPress={handleUbahProfil}>
           <Text style={styles.actionIcon}>👤</Text>
           <Text style={styles.actionText}>Ubah Profil</Text>
           <Text style={styles.actionArrow}>›</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionRow}
-          onPress={() => handleActionPress("Ubah Foto Profil")}
-        >
+        <TouchableOpacity style={styles.actionRow} onPress={handleChoosePhoto}>
           <Text style={styles.actionIcon}>🖼️</Text>
           <Text style={styles.actionText}>Ubah Foto Profil</Text>
           <Text style={styles.actionArrow}>›</Text>
@@ -190,6 +232,9 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
+  profileImageContainer: {
+    position: "relative",
+  },
   profileImage: {
     width: 100,
     height: 100,
@@ -197,6 +242,13 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: Colors.white,
     marginBottom: 12,
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50,
   },
   name: {
     fontSize: 22,
