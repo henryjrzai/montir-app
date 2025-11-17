@@ -108,3 +108,13 @@ export interface AssignMontirResponse {
   message: string;
   data: OrderDetail;
 }
+
+export interface ItemServiceRequest {
+  nama_item: string;
+  harga: number;
+}
+
+export interface UpdateSelesaiRequest {
+  harga_layanan: number;
+  item_service: ItemServiceRequest[];
+}

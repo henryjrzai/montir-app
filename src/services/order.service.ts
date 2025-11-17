@@ -9,6 +9,7 @@ import {
   AssignMontirResponse,
   DetailOrderResponse,
   ListOrderResponse,
+  UpdateSelesaiRequest,
 } from "../types/order.types";
 import { httpService } from "./http.service";
 
@@ -112,6 +113,64 @@ export const OrderService = {
     } catch (error: any) {
       console.error(
         "[OrderService] Failed to update status to 'kelokasi':",
+        error
+      );
+      throw error;
+    }
+  },
+
+  /**
+   * Update order status to "kerjakan"
+   * PUT /bengkel-management/order-layanan/update/kerjakan/{orderId}
+   */
+  async updateStatusToKerjakan(
+    orderId: number
+  ): Promise<AssignMontirResponse> {
+    try {
+      const url = `${API_ENDPOINTS.UPDATE_ORDER_STATUS_KERJAKAN}/${orderId}`;
+      console.log("[OrderService] Updating status to 'kerjakan':", {
+        orderId,
+        fullUrl: url,
+      });
+
+      const response = await httpService.put<AssignMontirResponse>(url, {});
+
+      console.log("[OrderService] Status updated to 'kerjakan' successfully");
+
+      return response;
+    } catch (error: any) {
+      console.error(
+        "[OrderService] Failed to update status to 'kerjakan':",
+        error
+      );
+      throw error;
+    }
+  },
+
+  /**
+   * Update order status to "selesai"
+   * PUT /bengkel-management/order-layanan/update/selesai/{orderId}
+   */
+  async updateStatusToSelesai(
+    orderId: number,
+    data: UpdateSelesaiRequest
+  ): Promise<AssignMontirResponse> {
+    try {
+      const url = `${API_ENDPOINTS.UPDATE_ORDER_STATUS_SELESAI}/${orderId}`;
+      console.log("[OrderService] Updating status to 'selesai':", {
+        orderId,
+        fullUrl: url,
+        payload: data,
+      });
+
+      const response = await httpService.put<AssignMontirResponse>(url, data);
+
+      console.log("[OrderService] Status updated to 'selesai' successfully");
+
+      return response;
+    } catch (error: any) {
+      console.error(
+        "[OrderService] Failed to update status to 'selesai':",
         error
       );
       throw error;

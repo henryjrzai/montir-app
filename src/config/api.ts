@@ -41,6 +41,10 @@ export const API_ENDPOINTS = {
   ASSIGN_MONTIR: "/bengkel-management/order-layanan/assign-montir",
   UPDATE_ORDER_STATUS_KELOKASI:
     "/bengkel-management/order-layanan/update/kelokasi",
+  UPDATE_ORDER_STATUS_KERJAKAN:
+    "/bengkel-management/order-layanan/update/kerjakan",
+  UPDATE_ORDER_STATUS_SELESAI:
+    "/bengkel-management/order-layanan/update/selesai",
   LIST_LAYANAN_BENGKEL: "/bengkel-management/layanan-bengkel",
   CREATE_LAYANAN_BENGKEL: "/bengkel-management/daftar-layanan",
   UPDATE_LAYANAN_BENGKEL: "/bengkel-management/update-layanan",

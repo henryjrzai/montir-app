@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Modal,
   Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -30,6 +32,15 @@ export default function MontirOrderDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // State for 'Selesai' modal
+  const [isSelesaiModalVisible, setIsSelesaiModalVisible] = useState(false);
+  const [hargaLayanan, setHargaLayanan] = useState("");
+  const [itemServices, setItemServices] = useState<
+    { nama_item: string; harga: string }[]
+  >([]);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemHarga, setNewItemHarga] = useState("");
 
   // Load order detail
   const loadOrderDetail = useCallback(async () => {
@@ -105,6 +116,129 @@ export default function MontirOrderDetailScreen() {
         },
       ]
     );
+  };
+
+  // Update status to 'kerjakan'
+  const handleUpdateStatusKerjakan = async () => {
+    if (isUpdating) return;
+
+    Alert.alert(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin mengubah status menjadi 'Dikerjakan'?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya",
+          onPress: async () => {
+            setIsUpdating(true);
+            try {
+              const response = await OrderService.updateStatusToKerjakan(
+                Number(orderId)
+              );
+              if (response.status && response.data) {
+                Alert.alert("Sukses", "Status order berhasil diubah.");
+                await onRefresh();
+              }
+            } catch (error: any) {
+              console.error(
+                "[MontirOrderDetail] Failed to update status:",
+                error
+              );
+              Alert.alert(
+                "Error",
+                error.response?.data?.message ||
+                  "Gagal mengubah status order."
+              );
+            } finally {
+              setIsUpdating(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle add item service in modal
+  const handleAddItemService = () => {
+    if (!newItemName || !newItemHarga) {
+      Alert.alert("Error", "Nama dan harga item tidak boleh kosong.");
+      return;
+    }
+    if (isNaN(Number(newItemHarga))) {
+      Alert.alert("Error", "Harga item harus berupa angka.");
+      return;
+    }
+    setItemServices([
+      ...itemServices,
+      { nama_item: newItemName, harga: newItemHarga },
+    ]);
+    setNewItemName("");
+    setNewItemHarga("");
+  };
+
+  // Handle remove item service in modal
+  const handleRemoveItemService = (index: number) => {
+    const newItems = [...itemServices];
+    newItems.splice(index, 1);
+    setItemServices(newItems);
+  };
+
+  // Update status to 'selesai' with payload
+  const handleUpdateStatusSelesai = async () => {
+    if (isUpdating) return;
+
+    if (!hargaLayanan || isNaN(Number(hargaLayanan))) {
+      Alert.alert("Error", "Harga layanan tidak valid.");
+      return;
+    }
+    if (
+      itemServices.some(
+        (item) => !item.nama_item || !item.harga || isNaN(Number(item.harga))
+      )
+    ) {
+      Alert.alert(
+        "Error",
+        "Ada item service yang tidak valid. Pastikan nama dan harga terisi dengan benar."
+      );
+      return;
+    }
+
+    const payload = {
+      harga_layanan: Number(hargaLayanan),
+      item_service: itemServices.map((item) => ({
+        nama_item: item.nama_item,
+        harga: Number(item.harga),
+      })),
+    };
+
+    setIsUpdating(true);
+    try {
+      const response = await OrderService.updateStatusToSelesai(
+        Number(orderId),
+        payload
+      );
+      if (response.status) {
+        Alert.alert(
+          "Sukses",
+          "Status order berhasil diubah dan rincian biaya disimpan."
+        );
+        setIsSelesaiModalVisible(false);
+        setHargaLayanan("");
+        setItemServices([]);
+        await onRefresh();
+      }
+    } catch (error: any) {
+      console.error(
+        "[MontirOrderDetail] Failed to update status to selesai:",
+        error
+      );
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal menyelesaikan order."
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   // Open Google Maps dengan koordinat order
@@ -406,66 +540,162 @@ export default function MontirOrderDetailScreen() {
             </View>
           </View>
         </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtonContainer}>
-          {orderData.status === "menunggu" && (
-            <TouchableOpacity
-              style={[
-                styles.mapsButton,
-                { backgroundColor: Colors.info },
-                isUpdating && styles.disabledButton,
-              ]}
-              onPress={handleUpdateStatusKeLokasi}
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <Text style={styles.mapsButtonText}>🚗 Ke Lokasi</Text>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {orderData.status === "kelokasi" && (
-            <TouchableOpacity
-              style={[styles.mapsButton, { backgroundColor: Colors.primary }]}
-              onPress={() => {
-                // TODO: Implement API call to change status to 'kerjakan'
-                Alert.alert(
-                  "Konfirmasi",
-                  "Apakah Anda yakin ingin mengubah status menjadi 'Dikerjakan'?",
-                  [
-                    { text: "Batal", style: "cancel" },
-                    {
-                      text: "Ya",
-                      onPress: () =>
-                        console.log("Change status to kerjakan"),
-                    },
-                  ]
-                );
-              }}
-            >
-              <Text style={styles.mapsButtonText}>🔧 Kerjakan</Text>
-            </TouchableOpacity>
-          )}
-
-          {orderData.status === "kerjakan" && (
-            <TouchableOpacity
-              style={[styles.mapsButton, { backgroundColor: Colors.success }]}
-              onPress={() => {
-                // TODO: Implement API call to change status to 'selesai'
-                Alert.alert("Konfirmasi", "Apakah Anda yakin ingin mengubah status menjadi 'Selesai'?", [
-                  { text: "Batal", style: "cancel" },
-                  { text: "Ya", onPress: () => console.log("Change status to selesai") },
-                ]);
-              }}
-            >
-              <Text style={styles.mapsButtonText}>✅ Selesai</Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </ScrollView>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtonContainer}>
+        {orderData.status === "menunggu" && (
+          <TouchableOpacity
+            style={[
+              styles.mapsButton,
+              { backgroundColor: Colors.info },
+              isUpdating && styles.disabledButton,
+            ]}
+            onPress={handleUpdateStatusKeLokasi}
+            disabled={isUpdating}
+          >
+            {isUpdating ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.mapsButtonText}>🚗 Ke Lokasi</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {orderData.status === "kelokasi" && (
+          <TouchableOpacity
+            style={[
+              styles.mapsButton,
+              { backgroundColor: Colors.primary },
+              isUpdating && styles.disabledButton,
+            ]}
+            onPress={handleUpdateStatusKerjakan}
+            disabled={isUpdating}
+          >
+            {isUpdating ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.mapsButtonText}>🔧 Kerjakan</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {orderData.status === "kerjakan" && (
+          <TouchableOpacity
+            style={[
+              styles.mapsButton,
+              { backgroundColor: Colors.success },
+              isUpdating && styles.disabledButton,
+            ]}
+            onPress={() => setIsSelesaiModalVisible(true)}
+            disabled={isUpdating}
+          >
+            {isUpdating ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.mapsButtonText}>✅ Selesai</Text>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Selesai Order Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isSelesaiModalVisible}
+        onRequestClose={() => {
+          setIsSelesaiModalVisible(!isSelesaiModalVisible);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selesaikan Order</Text>
+
+            <ScrollView>
+              {/* Harga Layanan */}
+              <Text style={styles.modalLabel}>Harga Jasa Layanan</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contoh: 50000"
+                keyboardType="numeric"
+                value={hargaLayanan}
+                onChangeText={setHargaLayanan}
+              />
+
+              {/* Item Services */}
+              <Text style={styles.modalLabel}>Item Service Tambahan</Text>
+              {itemServices.map((item, index) => (
+                <View key={index} style={styles.addedItemRow}>
+                  <Text style={styles.addedItemText}>
+                    {index + 1}. {item.nama_item} - Rp{" "}
+                    {Number(item.harga).toLocaleString("id-ID")}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemoveItemService(index)}>
+                    <Text style={styles.removeItemButton}>Hapus</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {itemServices.length === 0 && (
+                <Text style={styles.noItemsText}>
+                  Belum ada item service tambahan.
+                </Text>
+              )}
+
+              {/* Add New Item Form */}
+              <View style={styles.addItemForm}>
+                <TextInput
+                  style={[styles.modalInput, { flex: 1, marginRight: 8 }]}
+                  placeholder="Nama Item"
+                  value={newItemName}
+                  onChangeText={setNewItemName}
+                />
+                <TextInput
+                  style={[styles.modalInput, { flex: 1 }]}
+                  placeholder="Harga"
+                  keyboardType="numeric"
+                  value={newItemHarga}
+                  onChangeText={setNewItemHarga}
+                />
+                <TouchableOpacity
+                  style={styles.addItemButton}
+                  onPress={handleAddItemService}
+                >
+                  <Text style={styles.addItemButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+
+            {/* Modal Action Buttons */}
+            <View style={styles.modalActionContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setIsSelesaiModalVisible(false)}
+                disabled={isUpdating}
+              >
+                <Text style={styles.modalButtonText}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.modalButtonSave,
+                  isUpdating && styles.disabledButton,
+                ]}
+                onPress={handleUpdateStatusSelesai}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <Text style={styles.modalButtonText}>
+                    Simpan & Selesaikan
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -766,14 +996,115 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
   },
   actionButtonContainer: {
-    marginTop: 20,
+    marginTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 20,
     backgroundColor: Colors.background,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray[200],
   },
   disabledButton: {
     backgroundColor: Colors.gray[400],
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    maxHeight: "80%",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.text.secondary,
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: Colors.gray[100],
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+  },
+  addedItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
+  },
+  addedItemText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+  },
+  removeItemButton: {
+    fontSize: 14,
+    color: Colors.error,
+    fontWeight: "600",
+  },
+  noItemsText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: "center",
+    marginVertical: 16,
+    fontStyle: "italic",
+  },
+  addItemForm: {
+    flexDirection: "row",
+    // alignItems: "center",
+    marginTop: 16,
+  },
+  addItemButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 8,
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  addItemButtonText: {
+    color: Colors.white,
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  modalActionContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 24,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalButtonCancel: {
+    backgroundColor: Colors.gray[200],
+    marginRight: 8,
+  },
+  modalButtonSave: {
+    backgroundColor: Colors.success,
+    marginLeft: 8,
+  },
+  modalButtonText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
