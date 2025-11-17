@@ -30,6 +30,7 @@ interface AuthContextType {
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (updatedUserData: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -162,6 +163,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = async (updatedUserData: User) => {
+    try {
+      // Merge with existing user data to be safe
+      const newUser = { ...(user as User), ...updatedUserData };
+      setUser(newUser);
+      await StorageService.saveUser(newUser);
+      console.log("[AuthContext] User data updated in context and storage.");
+    } catch (error) {
+      console.error("Failed to update user in context:", error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -170,6 +183,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshUser,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

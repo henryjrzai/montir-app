@@ -210,3 +210,16 @@ export interface ProfileResponse {
     user: ProfileUser;
   };
 }
+
+export interface UpdateProfileRequest {
+  nama: string;
+  alamat: string;
+  no_telp: string;
+  email: string;
+}
+
+export interface UpdateProfileResponse {
+  status: boolean;
+  message: string;
+  data: ProfileUser;
+}

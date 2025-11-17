@@ -54,6 +54,12 @@ export default function PelangganLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="update-profile"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

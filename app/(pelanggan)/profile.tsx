@@ -73,6 +73,14 @@ export default function PelangganProfileScreen() {
     ]);
   };
 
+  const handleUbahProfil = () => {
+    if (!profile) return;
+    router.push({
+      pathname: "/(pelanggan)/update-profile",
+      params: { ...profile },
+    });
+  };
+
   const handleActionPress = (action: string) => {
     Alert.alert("Informasi", `Fitur "${action}" sedang dalam pengembangan.`);
   };
@@ -132,7 +140,7 @@ export default function PelangganProfileScreen() {
         <Text style={styles.cardTitle}>Aksi</Text>
         <TouchableOpacity
           style={styles.actionRow}
-          onPress={() => handleActionPress("Ubah Profil")}
+          onPress={handleUbahProfil}
         >
           <Text style={styles.actionIcon}>👤</Text>
           <Text style={styles.actionText}>Ubah Profil</Text>

@@ -13,6 +13,8 @@ import {
   OrderDetailResponse,
   OrderHistoryResponse,
   ProfileResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
 } from "../types/pelanggan.types";
 import { httpService } from "./http.service";
 
@@ -77,6 +79,19 @@ export const pelangganService = {
   async getProfile(): Promise<ProfileResponse> {
     const response = await httpService.get<ProfileResponse>(
       API_ENDPOINTS.GET_PROFILE
+    );
+    return response;
+  },
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(
+    data: UpdateProfileRequest
+  ): Promise<UpdateProfileResponse> {
+    const response = await httpService.put<UpdateProfileResponse>(
+      API_ENDPOINTS.UPDATE_PROFILE,
+      data
     );
     return response;
   },
