@@ -4,8 +4,9 @@
  */
 
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import * as Location from "expo-location";
 import {
   ActivityIndicator,
   Alert,
@@ -25,6 +26,7 @@ import { BengkelService } from "../../src/services/bengkel.service";
 
 export default function SetupBengkelScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,6 +36,17 @@ export default function SetupBengkelScreen() {
     latitude: "",
     longitude: "",
   });
+
+  useEffect(() => {
+    console.log("Received params:", params);
+    if (params.latitude && params.longitude) {
+      setFormData((prevData) => ({
+        ...prevData,
+        latitude: params.latitude as string,
+        longitude: params.longitude as string,
+      }));
+    }
+  }, [params.latitude, params.longitude]);
 
   const [foto, setFoto] = useState<any>(null);
 
@@ -73,6 +86,47 @@ export default function SetupBengkelScreen() {
     if (!result.canceled && result.assets[0]) {
       setFoto(result.assets[0]);
       setErrors({ ...errors, foto: "" });
+    }
+  };
+
+  // Request permission for location access
+  const requestLocationPermission = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Izin Lokasi Diperlukan",
+        "Aplikasi memerlukan izin akses lokasi untuk mengisi koordinat secara otomatis."
+      );
+      return false;
+    }
+    return true;
+  };
+
+  // Get current location
+  const getCurrentLocation = async () => {
+    setIsLoading(true);
+    try {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) return;
+
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      setFormData((prevData) => ({
+        ...prevData,
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+      }));
+      setErrors((prevErrors) => ({ ...prevErrors, latitude: "", longitude: "" }));
+      Alert.alert("Berhasil", "Lokasi berhasil didapatkan!");
+    } catch (error) {
+      console.error("[SetupBengkel] Gagal mendapatkan lokasi:", error);
+      Alert.alert(
+        "Gagal",
+        "Tidak dapat mendapatkan lokasi saat ini. Pastikan GPS Anda aktif."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -253,53 +307,78 @@ export default function SetupBengkelScreen() {
             ) : null}
           </View>
 
-          {/* Latitude */}
+          {/* Latitude & Longitude */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Latitude <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={[styles.input, errors.latitude ? styles.inputError : null]}
-              placeholder="Contoh: 3.549974357517737"
-              value={formData.latitude}
-              onChangeText={(text) => updateFormData("latitude", text)}
-              keyboardType="numeric"
-              editable={!isLoading}
-            />
-            {errors.latitude ? (
-              <Text style={styles.errorText}>{errors.latitude}</Text>
+            <View style={styles.latLongHeader}>
+              <Text style={styles.label}>
+                Koordinat Bengkel <Text style={styles.required}>*</Text>
+              </Text>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(bengkel)/pilih-lokasi",
+                    params: {
+                      latitude: formData.latitude,
+                      longitude: formData.longitude,
+                    },
+                  })
+                }
+                disabled={isLoading}
+              >
+                <Text style={styles.mapButtonText}>Pilih dari Peta</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputWithButton}>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.latLongInput,
+                  errors.latitude ? styles.inputError : null,
+                ]}
+                placeholder="Latitude"
+                value={formData.latitude}
+                onChangeText={(text) => updateFormData("latitude", text)}
+                keyboardType="numeric"
+                editable={!isLoading}
+              />
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.latLongInput,
+                  errors.longitude ? styles.inputError : null,
+                ]}
+                placeholder="Longitude"
+                value={formData.longitude}
+                onChangeText={(text) => updateFormData("longitude", text)}
+                keyboardType="numeric"
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                style={styles.locationButton}
+                onPress={getCurrentLocation}
+                disabled={isLoading}
+              >
+                <Text style={styles.locationButtonText}>Lokasi Saat Ini</Text>
+              </TouchableOpacity>
+            </View>
+            {errors.latitude || errors.longitude ? (
+              <Text style={styles.errorText}>
+                {errors.latitude || errors.longitude}
+              </Text>
             ) : null}
             <Text style={styles.helpText}>
-              Gunakan Google Maps untuk mendapatkan koordinat
+              Pilih dari peta, atau isi manual, atau dapatkan lokasi otomatis.
             </Text>
           </View>
+        </View>
 
-          {/* Longitude */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Longitude <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.longitude ? styles.inputError : null,
-              ]}
-              placeholder="Contoh: 98.62896182506256"
-              value={formData.longitude}
-              onChangeText={(text) => updateFormData("longitude", text)}
-              keyboardType="numeric"
-              editable={!isLoading}
-            />
-            {errors.longitude ? (
-              <Text style={styles.errorText}>{errors.longitude}</Text>
-            ) : null}
-          </View>
-
-          {/* Foto Bengkel */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Foto Bengkel <Text style={styles.required}>*</Text>
-            </Text>
+        {/* Foto Bengkel */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>
+            Foto Bengkel <Text style={styles.required}>*</Text>
+          </Text>
 
             {foto ? (
               <View style={styles.imageContainer}>
@@ -349,7 +428,6 @@ export default function SetupBengkelScreen() {
               <Text style={styles.submitButtonText}>Simpan Data Bengkel</Text>
             )}
           </TouchableOpacity>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -413,6 +491,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: Colors.white,
     color: Colors.text.primary,
+  },
+  inputWithButton: {
+    flexDirection: "column",
+    gap: 10,
+  },
+  latLongHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  mapButton: {
+    backgroundColor: Colors.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  mapButtonText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  latLongInput: {
+    flex: 1,
+  },
+  locationButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 8,
+    height: 50,
+    justifyContent: "center",
+  },
+  locationButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center"
   },
   textarea: {
     minHeight: 100,
