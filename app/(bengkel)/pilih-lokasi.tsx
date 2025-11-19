@@ -35,7 +35,7 @@ export default function PilihLokasiScreen() {
   const handleConfirmLocation = () => {
     if (selectedLocation) {
       router.replace({
-        pathname: "setup-bengkel", // Relative path to the screen in the same group
+        pathname: "/setup-bengkel", // Relative path to the screen in the same group
         params: {
           latitude: selectedLocation.latitude.toString(),
           longitude: selectedLocation.longitude.toString(),
