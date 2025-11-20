@@ -115,6 +115,7 @@ export interface ItemService {
 
 export interface OrderDetail {
   id: number;
+  kode_order: string;
   montir_id: number | null;
   layanan_bengkel_id: number;
   pelanggan_id: number;

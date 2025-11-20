@@ -7,13 +7,17 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { Colors } from "../../src/constants/colors";
+import { paymentService } from "../../src/services/payment.service";
 import { pelangganService } from "../../src/services/pelanggan.service";
 import { OrderDetail } from "../../src/types/pelanggan.types";
 
@@ -24,8 +28,12 @@ export default function OrderDetailScreen() {
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState("");
 
   const loadOrderDetail = useCallback(async () => {
+    setLoading(true);
     try {
       const response = await pelangganService.getOrderDetail(parseInt(orderId));
       if (response.status === "success") {
@@ -49,6 +57,70 @@ export default function OrderDetailScreen() {
   useEffect(() => {
     loadOrderDetail();
   }, [loadOrderDetail]);
+
+  const handleBayar = async () => {
+    if (!order?.kode_order) {
+      Alert.alert(
+        "Error",
+        "Kode order tidak ditemukan. Tidak dapat melanjutkan pembayaran."
+      );
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const response = await paymentService.createTransaction({
+        kode_order: order.kode_order,
+      });
+      
+      // --- DEBUGGING: Log the backend response ---
+      console.log("Backend Response:", JSON.stringify(response, null, 2));
+      // -----------------------------------------
+
+      if (response.status && response.data.snap_token) {
+        const url = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${response.data.snap_token}`;
+        setPaymentUrl(url);
+        setShowPaymentModal(true);
+      } else {
+        Alert.alert("Error", response.message || "Gagal memulai pembayaran.");
+      }
+    } catch (error: any) {
+      console.error("Error creating payment transaction:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Gagal memulai pembayaran."
+      );
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleWebViewNavigationStateChange = (newNavState: any) => {
+    const { url } = newNavState;
+    if (!url) return;
+
+    // Cek jika URL adalah URL callback dari Midtrans
+    // Midtrans akan redirect ke URL dengan status di query params setelah pembayaran
+    if (url.includes("?order_id=") && url.includes("&status_code=")) {
+      setShowPaymentModal(false);
+      setPaymentUrl("");
+
+      // Beri sedikit jeda sebelum memuat ulang, agar backend sempat memproses notifikasi Midtrans
+      setTimeout(() => {
+        Alert.alert(
+          "Info",
+          "Mengecek status pembayaran terbaru...",
+          [
+            {
+              text: "OK",
+              onPress: () => loadOrderDetail(),
+            },
+          ],
+          { cancelable: false }
+        );
+      }, 2000);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -111,9 +183,42 @@ export default function OrderDetailScreen() {
   );
 
   const totalHarga = totalItemService + Number(order.harga_layanan || 0);
+  console.log(order)
+  const showPaymentButton =
+    order.status === "selesai" && order.status_pembayaran !== "paid";
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      {/* Payment Modal */}
+      <Modal
+        visible={showPaymentModal}
+        onRequestClose={() => setShowPaymentModal(false)}
+        animationType="slide"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Lakukan Pembayaran</Text>
+            <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
+              <Text style={styles.modalCloseButton}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+          {paymentUrl ? (
+            <WebView
+              source={{ uri: paymentUrl }}
+              onNavigationStateChange={handleWebViewNavigationStateChange}
+              startInLoadingState={true}
+              renderLoading={() => (
+                <ActivityIndicator
+                  color={Colors.primary}
+                  size="large"
+                  style={styles.webViewLoader}
+                />
+              )}
+            />
+          ) : null}
+        </SafeAreaView>
+      </Modal>
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -140,7 +245,7 @@ export default function OrderDetailScreen() {
               {getStatusLabel(order.status)}
             </Text>
           </View>
-          <Text style={styles.orderIdText}>Order #{order.id}</Text>
+          <Text style={styles.orderIdText}>Order {order.kode_order}</Text>
           <Text style={styles.orderDate}>
             {new Date(order.created_at).toLocaleDateString("id-ID", {
               day: "numeric",
@@ -274,7 +379,7 @@ export default function OrderDetailScreen() {
                   styles.paymentBadge,
                   {
                     backgroundColor:
-                      order.status_pembayaran === "lunas"
+                      order.status_pembayaran === "paid"
                         ? Colors.success + "20"
                         : Colors.warning + "20",
                   },
@@ -287,11 +392,14 @@ export default function OrderDetailScreen() {
                       color:
                         order.status_pembayaran === "lunas"
                           ? Colors.success
+                          : order.status_pembayaran === "paid"
+                          ? Colors.success
                           : Colors.warning,
                     },
                   ]}
                 >
-                  {order.status_pembayaran === "lunas"
+                  {order.status_pembayaran === "lunas" ||
+                  order.status_pembayaran === "paid"
                     ? "Lunas"
                     : "Belum Lunas"}
                 </Text>
@@ -310,8 +418,25 @@ export default function OrderDetailScreen() {
             </Text>
           </View>
         </View>
+        <View style={{ height: 80 }} />
       </ScrollView>
-    </View>
+
+      {showPaymentButton && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.paymentButton}
+            onPress={handleBayar}
+            disabled={paymentLoading}
+          >
+            {paymentLoading ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.paymentButtonText}>Lakukan Pembayaran</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -529,5 +654,51 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.text.secondary,
     marginTop: 4,
+  },
+  footer: {
+    backgroundColor: Colors.white,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray[200],
+  },
+  paymentButton: {
+    backgroundColor: Colors.primary,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  paymentButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+  },
+  modalCloseButton: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: "500",
+  },
+  webViewLoader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });
