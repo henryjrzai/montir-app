@@ -5,6 +5,8 @@
 
 import { API_ENDPOINTS } from "../config/api";
 import {
+  BerikanUlasanRequest,
+  BerikanUlasanResponse,
   BengkelDetailResponse,
   BengkelSearchRequest,
   BengkelSearchResponse,
@@ -50,6 +52,20 @@ export const pelangganService = {
   async getOrderDetail(orderId: number): Promise<OrderDetailResponse> {
     const response = await httpService.get<OrderDetailResponse>(
       `${API_ENDPOINTS.ORDER_DETAIL}/${orderId}`
+    );
+    return response;
+  },
+
+  /**
+   * Berikan ulasan dan rating
+   */
+  async berikanUlasan(
+    orderLayananId: number,
+    data: BerikanUlasanRequest
+  ): Promise<BerikanUlasanResponse> {
+    const response = await httpService.post<BerikanUlasanResponse>(
+      `${API_ENDPOINTS.BERI_ULASAN}/${orderLayananId}`,
+      data
     );
     return response;
   },

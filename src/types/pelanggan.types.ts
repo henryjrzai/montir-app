@@ -131,11 +131,49 @@ export interface OrderDetail {
   montir: MontirDetail | null;
   layanan_bengkel: LayananBengkel;
   item_service: ItemService[];
+  ulasan_rating?: UlasanBengkel | null;
+  ulasan_bengkel?: UlasanBengkel | null;
+  ulasan_montir?: UlasanMontir | null;
 }
 
 export interface OrderDetailResponse {
   status: string;
   data: OrderDetail;
+}
+
+// Berikan Ulasan Types
+export interface BerikanUlasanRequest {
+  rating: number;
+  ulasan?: string;
+  rating_montir: number;
+  ulasan_montir?: string;
+}
+
+export interface UlasanBengkel {
+  id: number;
+  pelanggan_id: number;
+  bengkel_id: number;
+  order_layanan_id: number;
+  rating: number;
+  ulasan: string | null;
+}
+
+export interface UlasanMontir {
+  id: number;
+  pelanggan_id: number;
+  montir_id: number;
+  order_layanan_id: number;
+  rating: number;
+  ulasan: string | null;
+}
+
+export interface BerikanUlasanResponse {
+  status: boolean;
+  message: string;
+  data: {
+    bengkel: UlasanBengkel;
+    montir: UlasanMontir;
+  };
 }
 
 // Bengkel Detail Types

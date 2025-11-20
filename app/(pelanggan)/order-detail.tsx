@@ -1,7 +1,3 @@
-/**
- * Detail Order Pelanggan
- */
-
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -12,9 +8,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import StarRating from "../../src/components/StarRating";
 import { WebView } from "react-native-webview";
 import { Colors } from "../../src/constants/colors";
 import { paymentService } from "../../src/services/payment.service";
@@ -31,6 +29,14 @@ export default function OrderDetailScreen() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState("");
+
+  // Review Modal State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [bengkelRating, setBengkelRating] = useState(0);
+  const [bengkelUlasan, setBengkelUlasan] = useState("");
+  const [montirRating, setMontirRating] = useState(0);
+  const [montirUlasan, setMontirUlasan] = useState("");
 
   const loadOrderDetail = useCallback(async () => {
     setLoading(true);
@@ -72,10 +78,6 @@ export default function OrderDetailScreen() {
       const response = await paymentService.createTransaction({
         kode_order: order.kode_order,
       });
-      
-      // --- DEBUGGING: Log the backend response ---
-      console.log("Backend Response:", JSON.stringify(response, null, 2));
-      // -----------------------------------------
 
       if (response.status && response.data.snap_token) {
         const url = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${response.data.snap_token}`;
@@ -95,17 +97,47 @@ export default function OrderDetailScreen() {
     }
   };
 
+  const handleSimpanUlasan = async () => {
+    if (bengkelRating === 0 || montirRating === 0) {
+      Alert.alert("Validasi", "Rating untuk bengkel dan montir harus diisi.");
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      const response = await pelangganService.berikanUlasan(parseInt(orderId), {
+        rating: bengkelRating,
+        ulasan: bengkelUlasan,
+        rating_montir: montirRating,
+        ulasan_montir: montirUlasan,
+      });
+
+      if (response.status) {
+        Alert.alert("Sukses", "Ulasan Anda berhasil disimpan.");
+        setShowReviewModal(false);
+        loadOrderDetail(); // Refresh order details to show new review
+      } else {
+        Alert.alert("Error", response.message || "Gagal menyimpan ulasan.");
+      }
+    } catch (error: any) {
+      console.error("Error submitting review:", error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Terjadi kesalahan saat menyimpan ulasan."
+      );
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   const handleWebViewNavigationStateChange = (newNavState: any) => {
     const { url } = newNavState;
     if (!url) return;
 
-    // Cek jika URL adalah URL callback dari Midtrans
-    // Midtrans akan redirect ke URL dengan status di query params setelah pembayaran
     if (url.includes("?order_id=") && url.includes("&status_code=")) {
       setShowPaymentModal(false);
       setPaymentUrl("");
 
-      // Beri sedikit jeda sebelum memuat ulang, agar backend sempat memproses notifikasi Midtrans
       setTimeout(() => {
         Alert.alert(
           "Info",
@@ -183,9 +215,11 @@ export default function OrderDetailScreen() {
   );
 
   const totalHarga = totalItemService + Number(order.harga_layanan || 0);
-  console.log(order)
   const showPaymentButton =
     order.status === "selesai" && order.status_pembayaran !== "paid";
+  const showReviewButton =
+    order.status === "selesai" &&
+    (order.status_pembayaran === "paid" || order.status_pembayaran === "lunas") && order.ulasan_rating == null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -216,6 +250,77 @@ export default function OrderDetailScreen() {
               )}
             />
           ) : null}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Review Modal */}
+      <Modal
+        visible={showReviewModal}
+        onRequestClose={() => setShowReviewModal(false)}
+        animationType="slide"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Beri Ulasan & Rating</Text>
+            <TouchableOpacity onPress={() => setShowReviewModal(false)}>
+              <Text style={styles.modalCloseButton}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.reviewContent}>
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewSectionTitle}>
+                Ulasan untuk Bengkel "{order.montir?.bengkel.nama}"
+              </Text>
+              <Text style={styles.reviewLabel}>Rating Bengkel</Text>
+              <StarRating
+                rating={bengkelRating}
+                onSelectRating={setBengkelRating}
+              />
+              <Text style={styles.reviewLabel}>Ulasan Bengkel (Opsional)</Text>
+              <TextInput
+                style={styles.reviewInput}
+                multiline
+                numberOfLines={4}
+                placeholder="Bagaimana pengalaman Anda dengan bengkel ini?"
+                value={bengkelUlasan}
+                onChangeText={setBengkelUlasan}
+                maxLength={1000}
+              />
+            </View>
+
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewSectionTitle}>
+                Ulasan untuk Montir "{order.montir?.user.nama}"
+              </Text>
+              <Text style={styles.reviewLabel}>Rating Montir</Text>
+              <StarRating
+                rating={montirRating}
+                onSelectRating={setMontirRating}
+              />
+              <Text style={styles.reviewLabel}>Ulasan Montir (Opsional)</Text>
+              <TextInput
+                style={styles.reviewInput}
+                multiline
+                numberOfLines={4}
+                placeholder="Bagaimana kinerja montir yang menangani Anda?"
+                value={montirUlasan}
+                onChangeText={setMontirUlasan}
+                maxLength={1000}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.submitReviewButton}
+              onPress={handleSimpanUlasan}
+              disabled={reviewLoading}
+            >
+              {reviewLoading ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.paymentButtonText}>Kirim Ulasan</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
         </SafeAreaView>
       </Modal>
 
@@ -379,7 +484,8 @@ export default function OrderDetailScreen() {
                   styles.paymentBadge,
                   {
                     backgroundColor:
-                      order.status_pembayaran === "paid"
+                      order.status_pembayaran === "paid" ||
+                      order.status_pembayaran === "lunas"
                         ? Colors.success + "20"
                         : Colors.warning + "20",
                   },
@@ -390,9 +496,8 @@ export default function OrderDetailScreen() {
                     styles.paymentText,
                     {
                       color:
-                        order.status_pembayaran === "lunas"
-                          ? Colors.success
-                          : order.status_pembayaran === "paid"
+                        order.status_pembayaran === "lunas" ||
+                        order.status_pembayaran === "paid"
                           ? Colors.success
                           : Colors.warning,
                     },
@@ -433,6 +538,21 @@ export default function OrderDetailScreen() {
             ) : (
               <Text style={styles.paymentButtonText}>Lakukan Pembayaran</Text>
             )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {showReviewButton && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.reviewButton}
+            onPress={() => setShowReviewModal(true)}
+          >
+            <Text style={styles.paymentButtonText}>
+              {order.ulasan_bengkel
+                ? "Lihat/Ubah Ulasan"
+                : "Beri Ulasan & Rating"}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -660,9 +780,19 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: Colors.gray[200],
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   paymentButton: {
     backgroundColor: Colors.primary,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  reviewButton: {
+    backgroundColor: Colors.success,
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
@@ -674,12 +804,14 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
+    paddingTop: 60,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray[200],
@@ -701,4 +833,44 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  reviewContent: {
+    padding: 20,
+  },
+  reviewSection: {
+    marginBottom: 24,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+  },
+  reviewSectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.primary,
+    marginBottom: 16,
+  },
+  reviewLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.text.secondary,
+    marginBottom: 8,
+  },
+  reviewInput: {
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    textAlignVertical: "top",
+    minHeight: 100,
+    backgroundColor: Colors.white,
+  },
+  submitReviewButton: {
+    backgroundColor: Colors.primary,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 40,
+  },
 });
+
