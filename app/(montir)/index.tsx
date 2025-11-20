@@ -9,6 +9,7 @@ import {
   Alert,
   FlatList,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -18,6 +19,9 @@ import { Colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { montirService } from "../../src/services/montir.service";
 import { MontirOrder } from "../../src/types/montir.types";
+import MontirRatingChart from "../../src/components/MontirRatingChart";
+import RatingDetailModal from "../../src/components/RatingDetailModal";
+import { BengkelService } from "../../src/services/bengkel.service";
 
 export default function MontirHomeScreen() {
   const router = useRouter();
@@ -26,6 +30,19 @@ export default function MontirHomeScreen() {
   const [orders, setOrders] = useState<MontirOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [montirRatings, setMontirRatings] = useState<any[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMontir, setSelectedMontir] = useState<any>(null);
+
+  const handleDataPointClick = ({ index }: { index: number }) => {
+    setSelectedMontir(montirRatings[index]);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedMontir(null);
+  };
 
   // Load order list
   const loadOrders = useCallback(async () => {
@@ -39,6 +56,10 @@ export default function MontirHomeScreen() {
       const response = await montirService.getMontirOrderList(montirId);
       if (response.status && response.data) {
         setOrders(response.data);
+      }
+      const ratingResponse = await BengkelService.getMontirRatings();
+      if (ratingResponse.status && ratingResponse.data) {
+        setMontirRatings(ratingResponse.data);
       }
     } catch (error: any) {
       console.error("[MontirHome] Failed to load orders:", error);
@@ -151,7 +172,7 @@ export default function MontirHomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Selamat Datang! 🛠️</Text>
         <Text style={styles.name}>{user?.nama}</Text>
@@ -165,6 +186,14 @@ export default function MontirHomeScreen() {
       </View>
 
       <View style={styles.content}>
+        {montirRatings.length > 0 && (
+          <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <MontirRatingChart
+              data={montirRatings}
+              onDataPointClick={handleDataPointClick}
+            />
+          </View>
+        )}
         <View style={styles.titleBar}>
           <Text style={styles.contentTitle}>Daftar Order Saya</Text>
           <Text style={styles.orderCount}>
@@ -215,7 +244,12 @@ export default function MontirHomeScreen() {
           </View>
         )}
       </View>
-    </View>
+      <RatingDetailModal
+        visible={modalVisible}
+        onClose={closeModal}
+        data={selectedMontir}
+      />
+    </ScrollView>
   );
 }
 

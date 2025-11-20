@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
   CREATE_LAYANAN_BENGKEL: "/bengkel-management/daftar-layanan",
   UPDATE_LAYANAN_BENGKEL: "/bengkel-management/update-layanan",
   DELETE_LAYANAN_BENGKEL: "/bengkel-management/hapus-layanan",
+  RATING_MONTIR: "/bengkel-management/rating-montir",
 
   // Services
   ADD_SERVICE: "/services/add",

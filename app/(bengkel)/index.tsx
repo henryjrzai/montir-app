@@ -19,6 +19,8 @@ import { OrderService } from "../../src/services/order.service";
 import { StorageService } from "../../src/services/storage.service";
 import { BengkelData } from "../../src/types/bengkel.types";
 import { Order } from "../../src/types/order.types";
+import MontirRatingChart from "../../src/components/MontirRatingChart";
+import RatingDetailModal from "../../src/components/RatingDetailModal";
 import { checkBengkelStatus } from "../../src/utils/bengkelHelper";
 
 export default function BengkelHomeScreen() {
@@ -30,6 +32,19 @@ export default function BengkelHomeScreen() {
   const [bengkelData, setBengkelData] = useState<BengkelData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [montirRatings, setMontirRatings] = useState<any[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMontir, setSelectedMontir] = useState<any>(null);
+
+  const handleDataPointClick = ({ index }: { index: number }) => {
+    setSelectedMontir(montirRatings[index]);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedMontir(null);
+  };
 
   // Function untuk load order list
   const loadOrders = useCallback(async () => {
@@ -43,6 +58,10 @@ export default function BengkelHomeScreen() {
       const response = await OrderService.getOrderList();
       if (response.status === "success" && response.data) {
         setOrders(response.data);
+      }
+      const ratingResponse = await BengkelService.getMontirRatings();
+      if (ratingResponse.status && ratingResponse.data) {
+        setMontirRatings(ratingResponse.data);
       }
     } catch (error: any) {
       console.error("[BengkelHome] Failed to load orders:", error);
@@ -209,6 +228,15 @@ export default function BengkelHomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {currentBengkelStatus.isVerified && montirRatings.length > 0 && (
+          <View>
+            <MontirRatingChart
+              data={montirRatings}
+              onDataPointClick={handleDataPointClick}
+            />
+          </View>
+        )}
+
         {/* Order List - Hanya tampil jika verified */}
         {currentBengkelStatus.isVerified && (
           <View style={styles.orderSection}>
@@ -224,8 +252,7 @@ export default function BengkelHomeScreen() {
                   {/* Order Header */}
                   <View style={styles.orderHeader}>
                     <View style={styles.orderIdContainer}>
-                      <Text style={styles.orderIdLabel}>Order #</Text>
-                      <Text style={styles.orderIdText}>{order.id}</Text>
+                      <Text style={styles.orderIdText}>{order.kode_order}</Text>
                     </View>
                     <View
                       style={[
@@ -342,6 +369,11 @@ export default function BengkelHomeScreen() {
           </View>
         )}
       </ScrollView>
+      <RatingDetailModal
+        visible={modalVisible}
+        onClose={closeModal}
+        data={selectedMontir}
+      />
     </View>
   );
 }

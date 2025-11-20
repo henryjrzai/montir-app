@@ -115,4 +115,24 @@ export const BengkelService = {
       throw error;
     }
   },
+
+  /**
+   * Get montir ratings
+   * GET /bengkel-management/rating-montir
+   */
+  async getMontirRatings(): Promise<any> {
+    try {
+      console.log("[BengkelService] Getting montir ratings...");
+
+      const response = await httpService.get<any>(
+        API_ENDPOINTS.RATING_MONTIR
+      );
+
+      console.log("[BengkelService] Get montir ratings success:", response);
+      return response;
+    } catch (error: any) {
+      console.error("[BengkelService] Get montir ratings failed:", error);
+      throw error;
+    }
+  },
 };
