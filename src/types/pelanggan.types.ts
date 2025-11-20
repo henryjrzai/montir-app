@@ -197,6 +197,29 @@ export interface LayananBengkelItem {
 export interface BengkelDetailData {
   bengkel: BengkelDetailInfo;
   layanan: LayananBengkelItem[];
+  ulasan: UlasanBengkelPelanggan[];
+}
+
+export interface UlasanBengkelPelanggan {
+  id: number;
+  rating: string;
+  komentar: string | null;
+  pelanggan: {
+    id: number;
+    nama: string;
+    foto: string;
+  };
+}
+
+export interface UlasanRatingBengkel {
+  id: number;
+  rating: number;
+  komentar: string | null;
+  pelanggan: {
+    id: number;
+    nama: string;
+    foto: string | null;
+  };
 }
 
 export interface BengkelDetailResponse {

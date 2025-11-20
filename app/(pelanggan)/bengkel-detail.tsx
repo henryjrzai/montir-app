@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import StarRating from "../../src/components/StarRating";
 import { Colors } from "../../src/constants/colors";
 import { pelangganService } from "../../src/services/pelanggan.service";
 import {
@@ -202,6 +203,21 @@ export default function BengkelDetailScreen() {
               <Text style={styles.infoIcon}>📍</Text>
               <Text style={styles.infoText}>{bengkelData.bengkel.alamat}</Text>
             </View>
+
+            {/* Overall Rating */}
+            {bengkelData.bengkel.rating !== undefined &&
+              bengkelData.bengkel.rating !== null && (
+                <View style={styles.ratingContainer}>
+                  <StarRating
+                    rating={Number(bengkelData.bengkel.rating)}
+                    onSelectRating={() => {}} // Not selectable here
+                    starSize={20}
+                  />
+                  <Text style={styles.overallRatingText}>
+                    ({bengkelData.bengkel.rating}/5)
+                  </Text>
+                </View>
+              )}
           </View>
         </View>
 
@@ -238,6 +254,43 @@ export default function BengkelDetailScreen() {
             <Text style={styles.locationButtonText}>🗺️ Lihat di Maps</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Reviews Section */}
+        {bengkelData.ulasan && bengkelData.ulasan.length > 0 && (
+          <View style={styles.reviewsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>⭐ Ulasan Pelanggan</Text>
+              <Text style={styles.sectionSubtitle}>
+                {bengkelData.ulasan.length} ulasan
+              </Text>
+            </View>
+            {bengkelData.ulasan.map((ulasanItem) => (
+              <View key={ulasanItem.id} style={styles.reviewCard}>
+                <View style={styles.reviewerInfo}>
+                  <Image
+                      source={{ uri: ulasanItem.pelanggan.foto }}
+                      style={styles.reviewerAvatar}
+                  />
+                  <View>
+                    <Text style={styles.reviewerName}>
+                      {ulasanItem.pelanggan.nama}
+                    </Text>
+                    <StarRating
+                        rating={Number(ulasanItem.rating)}
+                        onSelectRating={() => {}}
+                        starSize={15}
+                    />
+                  </View>
+                </View>
+                {ulasanItem.komentar && (
+                  <Text style={styles.reviewComment}>
+                    {ulasanItem.komentar}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Order Modal */}
@@ -560,5 +613,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: Colors.white,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  overallRatingText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: Colors.text.secondary,
+  },
+  reviewsSection: {
+    padding: 20,
+    backgroundColor: Colors.background,
+    marginTop: 10,
+  },
+  reviewCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  reviewerInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  reviewerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+    backgroundColor: Colors.gray[200],
+  },
+  reviewerName: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
   },
 });
