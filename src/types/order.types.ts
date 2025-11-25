@@ -30,7 +30,7 @@ export interface Order {
   pelanggan_id: number;
   latitude: string;
   longitude: string;
-  status: "menunggu" | "kelokasi" | "kerjakan" | "selesai" | "batal";
+  status: "menunggu" | "kelokasi" | "kerjakan"| "pembayaran" | "selesai" | "batal";
   harga_layanan: number | null;
   status_pembayaran: "belum-lunas" | "lunas";
   bukti_bayar: string | null;

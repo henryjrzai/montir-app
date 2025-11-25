@@ -106,8 +106,7 @@ export default function MontirOrderDetailScreen() {
               );
               Alert.alert(
                 "Error",
-                error.response?.data?.message ||
-                  "Gagal mengubah status order."
+                error.response?.data?.message || "Gagal mengubah status order."
               );
             } finally {
               setIsUpdating(false);
@@ -146,8 +145,7 @@ export default function MontirOrderDetailScreen() {
               );
               Alert.alert(
                 "Error",
-                error.response?.data?.message ||
-                  "Gagal mengubah status order."
+                error.response?.data?.message || "Gagal mengubah status order."
               );
             } finally {
               setIsUpdating(false);
@@ -349,7 +347,7 @@ export default function MontirOrderDetailScreen() {
           <View style={styles.orderHeader}>
             <View>
               <Text style={styles.orderIdLabel}>Order ID</Text>
-              <Text style={styles.orderIdText}>#{orderData.id}</Text>
+              <Text style={styles.orderIdText}>{orderData.kode_order}</Text>
             </View>
             <View
               style={[
@@ -357,6 +355,7 @@ export default function MontirOrderDetailScreen() {
                 orderData.status === "menunggu" && styles.statusMenunggu,
                 orderData.status === "kelokasi" && styles.statusKelokasi,
                 orderData.status === "kerjakan" && styles.statusKerjakan,
+                orderData.status === "pembayaran" && styles.statusPembayaran,
                 orderData.status === "selesai" && styles.statusSelesai,
                 orderData.status === "batal" && styles.statusBatal,
               ]}
@@ -368,6 +367,8 @@ export default function MontirOrderDetailScreen() {
                   ? "🚗 Ke Lokasi"
                   : orderData.status === "kerjakan"
                   ? "🔧 Dikerjakan"
+                  : orderData.status === "pembayaran"
+                  ? "💰 Pembayaran"
                   : orderData.status === "selesai"
                   ? "✅ Selesai"
                   : "❌ Batal"}
@@ -499,47 +500,51 @@ export default function MontirOrderDetailScreen() {
         )}
 
         {/* Ringkasan Pembayaran */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Ringkasan Pembayaran</Text>
-          <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Harga Layanan:</Text>
-            <Text style={styles.paymentValue}>
-              Rp {Number(orderData.harga_layanan || 0).toLocaleString("id-ID")}
-            </Text>
-          </View>
-          <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Item Service:</Text>
-            <Text style={styles.paymentValue}>
-              Rp{" "}
-              {orderData.item_service
-                .reduce((sum, item) => sum + Number(item.harga), 0)
-                .toLocaleString("id-ID")}
-            </Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>
-              Rp {calculateTotal().toLocaleString("id-ID")}
-            </Text>
-          </View>
-          <View style={styles.paymentStatusRow}>
-            <Text style={styles.paymentStatusLabel}>Status Pembayaran:</Text>
-            <View
-              style={[
-                styles.paymentStatusBadge,
-                orderData.status_pembayaran === "lunas" &&
-                  styles.paymentStatusLunas,
-              ]}
-            >
-              <Text style={styles.paymentStatusText}>
-                {orderData.status_pembayaran === "lunas"
-                  ? "✓ Lunas"
-                  : "⏳ Belum Lunas"}
+        {(orderData.status === "pembayaran" ||
+          orderData.status === "selesai") && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Ringkasan Pembayaran</Text>
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>Harga Layanan:</Text>
+              <Text style={styles.paymentValue}>
+                Rp{" "}
+                {Number(orderData.harga_layanan || 0).toLocaleString("id-ID")}
               </Text>
             </View>
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>Item Service:</Text>
+              <Text style={styles.paymentValue}>
+                Rp{" "}
+                {orderData.item_service
+                  .reduce((sum, item) => sum + Number(item.harga), 0)
+                  .toLocaleString("id-ID")}
+              </Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalValue}>
+                Rp {calculateTotal().toLocaleString("id-ID")}
+              </Text>
+            </View>
+            <View style={styles.paymentStatusRow}>
+              <Text style={styles.paymentStatusLabel}>Status Pembayaran:</Text>
+              <View
+                style={[
+                  styles.paymentStatusBadge,
+                  orderData.status_pembayaran === "lunas" &&
+                    styles.paymentStatusLunas,
+                ]}
+              >
+                <Text style={styles.paymentStatusText}>
+                  {orderData.status_pembayaran === "lunas"
+                    ? "✓ Lunas"
+                    : "⏳ Belum Lunas"}
+                </Text>
+              </View>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
 
       {/* Action Buttons */}
@@ -631,7 +636,9 @@ export default function MontirOrderDetailScreen() {
                     {index + 1}. {item.nama_item} - Rp{" "}
                     {Number(item.harga).toLocaleString("id-ID")}
                   </Text>
-                  <TouchableOpacity onPress={() => handleRemoveItemService(index)}>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveItemService(index)}
+                  >
                     <Text style={styles.removeItemButton}>Hapus</Text>
                   </TouchableOpacity>
                 </View>
@@ -780,7 +787,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   orderIdText: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: "bold",
     color: Colors.primary,
   },
@@ -800,6 +807,9 @@ const styles = StyleSheet.create({
   },
   statusSelesai: {
     backgroundColor: Colors.success + "20",
+  },
+  statusPembayaran: {
+    backgroundColor: Colors.warning + "20",
   },
   statusBatal: {
     backgroundColor: Colors.error + "20",

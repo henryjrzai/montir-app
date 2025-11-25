@@ -104,13 +104,14 @@ export default function MontirHomeScreen() {
       onPress={() => handleOrderPress(item.id)}
     >
       <View style={styles.orderHeader}>
-        <Text style={styles.orderId}>Order #{item.id}</Text>
+        <Text style={styles.orderId}>Order {item.kode_order}</Text>
         <View
           style={[
             styles.statusBadge,
             item.status === "menunggu" && styles.statusMenunggu,
             item.status === "kelokasi" && styles.statusKelokasi,
             item.status === "kerjakan" && styles.statusKerjakan,
+            item.status === "pembayaran" && styles.statusPembayaran,
             item.status === "selesai" && styles.statusSelesai,
             item.status === "batal" && styles.statusBatal,
           ]}
@@ -122,6 +123,8 @@ export default function MontirHomeScreen() {
               ? "🚗 Ke Lokasi"
               : item.status === "kerjakan"
               ? "🔧 Dikerjakan"
+              : item.status === "pembayaran"
+              ? "💰 Pembayaran"
               : item.status === "selesai"
               ? "✅ Selesai"
               : "❌ Batal"}
@@ -172,7 +175,16 @@ export default function MontirHomeScreen() {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[Colors.primary]}
+          tintColor={Colors.primary}
+        />
+      }
+      >
       <View style={styles.header}>
         <Text style={styles.greeting}>Selamat Datang! 🛠️</Text>
         <Text style={styles.name}>{user?.nama}</Text>
@@ -222,14 +234,6 @@ export default function MontirHomeScreen() {
             renderItem={renderOrderItem}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[Colors.primary]}
-                tintColor={Colors.primary}
-              />
-            }
             showsVerticalScrollIndicator={false}
           />
         ) : (
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   orderId: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     color: Colors.primary,
   },
@@ -376,6 +380,9 @@ const styles = StyleSheet.create({
   },
   statusSelesai: {
     backgroundColor: Colors.success + "20",
+  },
+  statusPembayaran: {
+    backgroundColor: Colors.warning + "20",
   },
   statusBatal: {
     backgroundColor: Colors.error + "20",

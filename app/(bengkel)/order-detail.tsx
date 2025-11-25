@@ -247,7 +247,7 @@ export default function BengkelOrderDetailScreen() {
           <View style={styles.orderHeader}>
             <View>
               <Text style={styles.orderIdLabel}>Order ID</Text>
-              <Text style={styles.orderIdText}>#{orderData.id}</Text>
+              <Text style={styles.orderIdText}>{orderData.kode_order}</Text>
             </View>
             <View
               style={[
@@ -255,6 +255,7 @@ export default function BengkelOrderDetailScreen() {
                 orderData.status === "menunggu" && styles.statusMenunggu,
                 orderData.status === "kelokasi" && styles.statusKelokasi,
                 orderData.status === "kerjakan" && styles.statusKerjakan,
+                orderData.status === "pembayaran" && styles.statusPembayaran,
                 orderData.status === "selesai" && styles.statusSelesai,
                 orderData.status === "batal" && styles.statusBatal,
               ]}
@@ -266,6 +267,8 @@ export default function BengkelOrderDetailScreen() {
                   ? "🚗 Ke Lokasi"
                   : orderData.status === "kerjakan"
                   ? "🔧 Dikerjakan"
+                  : orderData.status === "pembayaran"
+                  ? "💰 Pembayaran"
                   : orderData.status === "selesai"
                   ? "✅ Selesai"
                   : "❌ Batal"}
@@ -403,7 +406,8 @@ export default function BengkelOrderDetailScreen() {
         )}
 
         {/* Ringkasan Pembayaran */}
-        <View style={styles.card}>
+        {(orderData.status === "pembayaran" || orderData.status === "selesai") && 
+          <View style={styles.card}>
           <Text style={styles.cardTitle}>Ringkasan Pembayaran</Text>
           <View style={styles.paymentRow}>
             <Text style={styles.paymentLabel}>Harga Layanan:</Text>
@@ -444,9 +448,10 @@ export default function BengkelOrderDetailScreen() {
             </View>
           </View>
         </View>
+        }
 
         {/* Action Buttons - Hanya tampil untuk status menunggu */}
-        {orderData.status === "menunggu" && (
+        {orderData.status === "menunggu" && !orderData.montir_id && (
           <View style={styles.actionSection}>
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
@@ -607,7 +612,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   orderIdText: {
-    fontSize: 24,
+    fontSize: 15,
     fontWeight: "bold",
     color: Colors.primary,
   },
@@ -627,6 +632,9 @@ const styles = StyleSheet.create({
   },
   statusSelesai: {
     backgroundColor: Colors.success + "20",
+  },
+  statusPembayaran: {
+    backgroundColor: Colors.warning + "20",
   },
   statusBatal: {
     backgroundColor: Colors.error + "20",

@@ -57,6 +57,8 @@ export default function PelangganHomeScreen() {
         return Colors.info;
       case "kerjakan":
         return "#9333ea";
+      case "pembayaran":
+        return Colors.warning;
       case "selesai":
         return Colors.success;
       case "batal":
@@ -74,6 +76,8 @@ export default function PelangganHomeScreen() {
         return "🚗 Menuju Lokasi";
       case "kerjakan":
         return "🔧 Dikerjakan";
+      case "pembayaran":
+        return "💰 Pembayaran";
       case "selesai":
         return "✅ Selesai";
       case "batal":

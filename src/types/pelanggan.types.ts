@@ -59,7 +59,7 @@ export interface OrderHistoryItem {
   pelanggan_id: number;
   latitude: string;
   longitude: string;
-  status: "menunggu" | "kelokasi" | "kerjakan" | "selesai" | "batal";
+  status: "menunggu" | "kelokasi" | "kerjakan" | "pembayaran" | "selesai" | "batal";
   harga_layanan: string | null;
   status_pembayaran: string;
   bukti_bayar: string | null;
@@ -121,7 +121,7 @@ export interface OrderDetail {
   pelanggan_id: number;
   latitude: string;
   longitude: string;
-  status: "menunggu" | "kelokasi" | "kerjakan" | "selesai" | "batal";
+  status: "menunggu" | "kelokasi" | "kerjakan"  | "pembayaran" | "selesai" | "batal";
   harga_layanan: number | null;
   status_pembayaran: string;
   bukti_bayar: string | null;

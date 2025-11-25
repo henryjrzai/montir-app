@@ -162,6 +162,8 @@ export default function OrderDetailScreen() {
         return Colors.info;
       case "kerjakan":
         return "#9333ea";
+      case "pembayaran":
+        return Colors.warning;
       case "selesai":
         return Colors.success;
       case "batal":
@@ -179,6 +181,8 @@ export default function OrderDetailScreen() {
         return "🚗 Menuju Lokasi";
       case "kerjakan":
         return "🔧 Dikerjakan";
+      case "pembayaran":
+        return "💰 Pembayaran";
       case "selesai":
         return "✅ Selesai";
       case "batal":
@@ -216,7 +220,7 @@ export default function OrderDetailScreen() {
 
   const totalHarga = totalItemService + Number(order.harga_layanan || 0);
   const showPaymentButton =
-    order.status === "selesai" && order.status_pembayaran !== "paid";
+    order.status === "pembayaran" && order.status_pembayaran !== "paid";
   const showReviewButton =
     order.status === "selesai" &&
     (order.status_pembayaran === "paid" || order.status_pembayaran === "lunas") && order.ulasan_rating == null;
@@ -447,7 +451,8 @@ export default function OrderDetailScreen() {
         )}
 
         {/* Payment Info */}
-        <View style={styles.section}>
+        {(order.status === "pembayaran" || order.status === "selesai") && 
+          <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informasi Pembayaran</Text>
           <View style={styles.card}>
             <View style={styles.infoRow}>
@@ -512,6 +517,8 @@ export default function OrderDetailScreen() {
             </View>
           </View>
         </View>
+        }
+        
 
         {/* Lokasi */}
         <View style={styles.section}>

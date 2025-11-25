@@ -260,6 +260,7 @@ export default function BengkelHomeScreen() {
                         order.status === "menunggu" && styles.statusMenunggu,
                         order.status === "kelokasi" && styles.statusKelokasi,
                         order.status === "kerjakan" && styles.statusKerjakan,
+                        order.status === "pembayaran" && styles.statusPembayaran,
                         order.status === "selesai" && styles.statusSelesai,
                         order.status === "batal" && styles.statusBatal,
                       ]}
@@ -271,6 +272,8 @@ export default function BengkelHomeScreen() {
                           ? "🚗 Ke Lokasi"
                           : order.status === "kerjakan"
                           ? "🔧 Dikerjakan"
+                          : order.status === "pembayaran"
+                          ? "💰 Pembayaran"
                           : order.status === "selesai"
                           ? "✅ Selesai"
                           : "❌ Batal"}
@@ -634,6 +637,9 @@ const styles = StyleSheet.create({
   },
   statusSelesai: {
     backgroundColor: Colors.success + "20",
+  },
+  statusPembayaran: {
+    backgroundColor: Colors.warning + "20",
   },
   statusBatal: {
     backgroundColor: Colors.error + "20",
