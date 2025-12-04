@@ -12,8 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import StarRating from "../../src/components/StarRating";
 import { WebView } from "react-native-webview";
+import StarRating from "../../src/components/StarRating";
 import { Colors } from "../../src/constants/colors";
 import { paymentService } from "../../src/services/payment.service";
 import { pelangganService } from "../../src/services/pelanggan.service";
@@ -123,7 +123,8 @@ export default function OrderDetailScreen() {
       console.error("Error submitting review:", error);
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Terjadi kesalahan saat menyimpan ulasan."
+        error.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan ulasan."
       );
     } finally {
       setReviewLoading(false);
@@ -223,7 +224,9 @@ export default function OrderDetailScreen() {
     order.status === "pembayaran" && order.status_pembayaran !== "paid";
   const showReviewButton =
     order.status === "selesai" &&
-    (order.status_pembayaran === "paid" || order.status_pembayaran === "lunas") && order.ulasan_rating == null;
+    (order.status_pembayaran === "paid" ||
+      order.status_pembayaran === "lunas") &&
+    order.ulasan_rating == null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -412,6 +415,22 @@ export default function OrderDetailScreen() {
                   <Text style={styles.montirContact}>
                     📱 {order.montir.user.no_telp}
                   </Text>
+                  <TouchableOpacity
+                    style={styles.chatButton}
+                    onPress={() => {
+                      router.push({
+                        pathname: "/chat/[orderId]",
+                        params: {
+                          orderId: orderId,
+                          orderCode: order.kode_order,
+                          partnerName: order.montir?.user.nama || "Montir",
+                          partnerRole: "Montir",
+                        },
+                      });
+                    }}
+                  >
+                    <Text style={styles.chatButtonText}>💬 Chat Montir</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -451,74 +470,73 @@ export default function OrderDetailScreen() {
         )}
 
         {/* Payment Info */}
-        {(order.status === "pembayaran" || order.status === "selesai") && 
+        {(order.status === "pembayaran" || order.status === "selesai") && (
           <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informasi Pembayaran</Text>
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Harga Layanan:</Text>
-              <Text style={styles.priceText}>
-                Rp{" "}
-                {order.harga_layanan
-                  ? order.harga_layanan.toLocaleString()
-                  : "0"}
-              </Text>
-            </View>
-            {order.item_service.length > 0 && (
-              <>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Total Item Service:</Text>
-                  <Text style={styles.priceText}>
-                    Rp {totalItemService.toLocaleString()}
-                  </Text>
-                </View>
-                <View style={styles.infoDivider} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.totalLabel}>TOTAL HARGA:</Text>
-                  <Text style={styles.totalPrice}>
-                    Rp {totalHarga.toLocaleString()}
-                  </Text>
-                </View>
-              </>
-            )}
-            <View style={styles.infoDivider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Status Pembayaran:</Text>
-              <View
-                style={[
-                  styles.paymentBadge,
-                  {
-                    backgroundColor:
-                      order.status_pembayaran === "paid" ||
-                      order.status_pembayaran === "lunas"
-                        ? Colors.success + "20"
-                        : Colors.warning + "20",
-                  },
-                ]}
-              >
-                <Text
+            <Text style={styles.sectionTitle}>Informasi Pembayaran</Text>
+            <View style={styles.card}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Harga Layanan:</Text>
+                <Text style={styles.priceText}>
+                  Rp{" "}
+                  {order.harga_layanan
+                    ? order.harga_layanan.toLocaleString()
+                    : "0"}
+                </Text>
+              </View>
+              {order.item_service.length > 0 && (
+                <>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Total Item Service:</Text>
+                    <Text style={styles.priceText}>
+                      Rp {totalItemService.toLocaleString()}
+                    </Text>
+                  </View>
+                  <View style={styles.infoDivider} />
+                  <View style={styles.infoRow}>
+                    <Text style={styles.totalLabel}>TOTAL HARGA:</Text>
+                    <Text style={styles.totalPrice}>
+                      Rp {totalHarga.toLocaleString()}
+                    </Text>
+                  </View>
+                </>
+              )}
+              <View style={styles.infoDivider} />
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Status Pembayaran:</Text>
+                <View
                   style={[
-                    styles.paymentText,
+                    styles.paymentBadge,
                     {
-                      color:
-                        order.status_pembayaran === "lunas" ||
-                        order.status_pembayaran === "paid"
-                          ? Colors.success
-                          : Colors.warning,
+                      backgroundColor:
+                        order.status_pembayaran === "paid" ||
+                        order.status_pembayaran === "lunas"
+                          ? Colors.success + "20"
+                          : Colors.warning + "20",
                     },
                   ]}
                 >
-                  {order.status_pembayaran === "lunas" ||
-                  order.status_pembayaran === "paid"
-                    ? "Lunas"
-                    : "Belum Lunas"}
-                </Text>
+                  <Text
+                    style={[
+                      styles.paymentText,
+                      {
+                        color:
+                          order.status_pembayaran === "lunas" ||
+                          order.status_pembayaran === "paid"
+                            ? Colors.success
+                            : Colors.warning,
+                      },
+                    ]}
+                  >
+                    {order.status_pembayaran === "lunas" ||
+                    order.status_pembayaran === "paid"
+                      ? "Lunas"
+                      : "Belum Lunas"}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-        }
-        
+        )}
 
         {/* Lokasi */}
         <View style={styles.section}>
@@ -704,6 +722,19 @@ const styles = StyleSheet.create({
   montirContact: {
     fontSize: 14,
     color: Colors.text.secondary,
+    marginBottom: 8,
+  },
+  chatButton: {
+    backgroundColor: Colors.success,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  chatButtonText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: "600",
   },
   itemRow: {
     flexDirection: "row",
@@ -880,4 +911,3 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
 });
-

@@ -425,6 +425,22 @@ export default function MontirOrderDetailScreen() {
                 {orderData.pelanggan.alamat}
               </Text>
             </View>
+            <TouchableOpacity
+              style={styles.chatButton}
+              onPress={() => {
+                router.push({
+                  pathname: "/chat/[orderId]",
+                  params: {
+                    orderId: orderId,
+                    orderCode: orderData.kode_order,
+                    partnerName: orderData.pelanggan.nama || "Pelanggan",
+                    partnerRole: "Pelanggan"
+                  }
+                });
+              }}
+            >
+              <Text style={styles.chatButtonText}>💬 Chat Pelanggan</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1092,6 +1108,19 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 24,
     fontWeight: "bold",
+  },
+  chatButton: {
+    backgroundColor: Colors.success,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  chatButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: "600",
   },
   modalActionContainer: {
     flexDirection: "row",
