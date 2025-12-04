@@ -548,12 +548,12 @@ export default function MontirOrderDetailScreen() {
               <View
                 style={[
                   styles.paymentStatusBadge,
-                  orderData.status_pembayaran === "lunas" &&
+                  orderData.status_pembayaran === "paid" &&
                     styles.paymentStatusLunas,
                 ]}
               >
                 <Text style={styles.paymentStatusText}>
-                  {orderData.status_pembayaran === "lunas"
+                  {orderData.status_pembayaran === "paid"
                     ? "✓ Lunas"
                     : "⏳ Belum Lunas"}
                 </Text>

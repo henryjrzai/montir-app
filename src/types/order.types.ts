@@ -32,7 +32,7 @@ export interface Order {
   longitude: string;
   status: "menunggu" | "kelokasi" | "kerjakan"| "pembayaran" | "selesai" | "batal";
   harga_layanan: number | null;
-  status_pembayaran: "belum-lunas" | "lunas";
+  status_pembayaran: "pending" | "paid" | "expired" | "failed";
   bukti_bayar: string | null;
   created_at: string;
   updated_at: string;

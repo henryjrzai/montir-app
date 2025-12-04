@@ -508,8 +508,7 @@ export default function OrderDetailScreen() {
                     styles.paymentBadge,
                     {
                       backgroundColor:
-                        order.status_pembayaran === "paid" ||
-                        order.status_pembayaran === "lunas"
+                        order.status_pembayaran === "paid"
                           ? Colors.success + "20"
                           : Colors.warning + "20",
                     },

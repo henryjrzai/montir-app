@@ -322,11 +322,11 @@ export default function BengkelHomeScreen() {
                       <Text
                         style={[
                           styles.paymentText,
-                          order.status_pembayaran === "lunas" &&
+                          order.status_pembayaran === "paid" &&
                             styles.paymentLunas,
                         ]}
                       >
-                        {order.status_pembayaran === "lunas"
+                        {order.status_pembayaran === "paid"
                           ? "✓ Lunas"
                           : "⏳ Belum Lunas"}
                       </Text>
