@@ -415,15 +415,17 @@ export default function BengkelOrderDetailScreen() {
               Rp {Number(orderData.harga_layanan || 0).toLocaleString("id-ID")}
             </Text>
           </View>
-          <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>Item Service:</Text>
-            <Text style={styles.paymentValue}>
-              Rp{" "}
-              {orderData.item_service
-                .reduce((sum, item) => sum + Number(item.harga), 0)
-                .toLocaleString("id-ID")}
-            </Text>
-          </View>
+          {orderData.item_service.length > 0 && (
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>Item Service:</Text>
+              <Text style={styles.paymentValue}>
+                Rp{" "}
+                {orderData.item_service
+                  .reduce((sum, item) => sum + Number(item.harga), 0)
+                  .toLocaleString("id-ID")}
+              </Text>
+            </View>
+          )}
           <View style={styles.divider} />
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total:</Text>
