@@ -33,7 +33,7 @@ export interface BengkelData {
   alamat: string;
   latitude: string;
   longitude: string;
-  verifikasi: string; // "0" = pending/rejected, "1" = verified
+  verifikasi: number; // "0" = pending/rejected, "1" = verified
   alasan_penolakan: string | null;
   foto: string;
   created_at: string;

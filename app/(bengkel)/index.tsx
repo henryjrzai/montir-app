@@ -106,7 +106,7 @@ export default function BengkelHomeScreen() {
 
   // Load orders ketika bengkel data berubah dan verified
   useEffect(() => {
-    if (bengkelData && bengkelData.verifikasi === "1") {
+    if (bengkelData && bengkelData.verifikasi === 1) {
       loadOrders();
     }
   }, [bengkelData, loadOrders]);
@@ -117,9 +117,10 @@ export default function BengkelHomeScreen() {
     try {
       await loadBengkelStatus();
       // Load orders juga saat refresh jika sudah verified
-      if (bengkelData && bengkelData.verifikasi === "1") {
+      if (bengkelData && bengkelData.verifikasi === 1) {
         await loadOrders();
       }
+      console.log(`bengkelData`, bengkelData);
     } finally {
       setRefreshing(false);
     }
@@ -134,10 +135,10 @@ export default function BengkelHomeScreen() {
   const currentBengkelStatus = bengkelData
     ? {
         hasData: true,
-        isVerified: bengkelData.verifikasi === "1",
-        type: bengkelData.verifikasi === "1" ? "success" : "warning",
+        isVerified: bengkelData.verifikasi === 1 ? true : false,
+        type: bengkelData.verifikasi === 1 ? "success" : "warning",
         message:
-          bengkelData.verifikasi === "1"
+          bengkelData.verifikasi === 1
             ? "Bengkel Anda sudah terverifikasi dan dapat menerima orderan."
             : bengkelData.alasan_penolakan
             ? `Bengkel Anda ditolak: ${bengkelData.alasan_penolakan}`

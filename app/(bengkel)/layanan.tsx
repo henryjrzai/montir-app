@@ -24,8 +24,10 @@ export default function LayananScreen() {
   const [layananList, setLayananList] = useState<LayananBengkelItem[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLayanan, setNewLayanan] = useState("");
+  const [newHarga, setNewHarga] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editLayanan, setEditLayanan] = useState("");
+  const [editHarga, setEditHarga] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -66,15 +68,32 @@ export default function LayananScreen() {
       return;
     }
 
+    if (!newHarga.trim()) {
+      Alert.alert("Error", "Harga layanan tidak boleh kosong");
+      return;
+    }
+
+    const harga = parseInt(newHarga);
+    if (isNaN(harga) || harga <= 0) {
+      Alert.alert("Error", "Harga harus berupa angka yang valid");
+      return;
+    }
+
     setSubmitting(true);
     try {
       // Call API to create layanan
-      const response = await layananService.createLayanan([newLayanan]);
+      const response = await layananService.createLayanan([
+        {
+          nama: newLayanan,
+          harga: harga,
+        },
+      ]);
 
       if (response.status) {
         // Update list with new data from server
         setLayananList(response.data.layanan);
         setNewLayanan("");
+        setNewHarga("");
         setShowAddForm(false);
         Alert.alert("Berhasil", response.message);
       } else {
@@ -96,12 +115,24 @@ export default function LayananScreen() {
     if (item) {
       setEditingId(id);
       setEditLayanan(item.jenis_layanan);
+      setEditHarga(item.harga.toString());
     }
   };
 
   const handleSaveEdit = async () => {
     if (!editLayanan.trim()) {
       Alert.alert("Error", "Nama layanan tidak boleh kosong");
+      return;
+    }
+
+    if (!editHarga.trim()) {
+      Alert.alert("Error", "Harga layanan tidak boleh kosong");
+      return;
+    }
+
+    const harga = parseInt(editHarga);
+    if (isNaN(harga) || harga <= 0) {
+      Alert.alert("Error", "Harga harus berupa angka yang valid");
       return;
     }
 
@@ -112,7 +143,8 @@ export default function LayananScreen() {
       // Call API to update layanan
       const response = await layananService.updateLayanan(
         editingId,
-        editLayanan
+        editLayanan,
+        harga
       );
 
       if (response.status) {
@@ -124,6 +156,7 @@ export default function LayananScreen() {
         );
         setEditingId(null);
         setEditLayanan("");
+        setEditHarga("");
         Alert.alert("Berhasil", response.message);
       } else {
         Alert.alert("Error", response.message || "Gagal mengupdate layanan");
@@ -228,6 +261,15 @@ export default function LayananScreen() {
                 placeholder="Nama layanan (contoh: Ganti Oli)"
                 value={newLayanan}
                 onChangeText={setNewLayanan}
+                editable={!submitting}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Harga (contoh: 50000)"
+                value={newHarga}
+                onChangeText={setNewHarga}
+                keyboardType="numeric"
+                editable={!submitting}
               />
               <View style={styles.formActions}>
                 <TouchableOpacity
@@ -235,6 +277,7 @@ export default function LayananScreen() {
                   onPress={() => {
                     setShowAddForm(false);
                     setNewLayanan("");
+                    setNewHarga("");
                   }}
                   disabled={submitting}
                 >
@@ -282,7 +325,17 @@ export default function LayananScreen() {
                         style={styles.editInput}
                         value={editLayanan}
                         onChangeText={setEditLayanan}
+                        placeholder="Nama layanan"
+                        editable={!submitting}
                         autoFocus
+                      />
+                      <TextInput
+                        style={styles.editInput}
+                        value={editHarga}
+                        onChangeText={setEditHarga}
+                        placeholder="Harga"
+                        keyboardType="numeric"
+                        editable={!submitting}
                       />
                       <View style={styles.editActions}>
                         <TouchableOpacity
@@ -290,6 +343,7 @@ export default function LayananScreen() {
                           onPress={() => {
                             setEditingId(null);
                             setEditLayanan("");
+                            setEditHarga("");
                           }}
                           disabled={submitting}
                         >
@@ -319,9 +373,16 @@ export default function LayananScreen() {
                     <>
                       <View style={styles.layananInfo}>
                         <Text style={styles.layananIcon}>🔧</Text>
-                        <Text style={styles.layananName}>
-                          {item.jenis_layanan}
-                        </Text>
+                        <View>
+                          <Text style={styles.layananName}>
+                            {item.jenis_layanan}{" "}
+                          </Text>
+                          <Text style={{ fontStyle: "italic" }}>
+                            {item.harga
+                              ? `Rp.${item.harga.toLocaleString()}`
+                              : ""}
+                          </Text>
+                        </View>
                       </View>
                       <View style={styles.layananActions}>
                         <TouchableOpacity

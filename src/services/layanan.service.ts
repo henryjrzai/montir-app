@@ -28,9 +28,11 @@ export const layananService = {
   /**
    * Create new layanan bengkel (batch)
    */
-  async createLayanan(jenisLayanan: string[]): Promise<CreateLayananResponse> {
+  async createLayanan(
+    layanan: { nama: string; harga: number }[]
+  ): Promise<CreateLayananResponse> {
     const payload: CreateLayananRequest = {
-      jenis_layanan: jenisLayanan,
+      jenis_layanan: layanan,
     };
     const response = await httpService.post<CreateLayananResponse>(
       API_ENDPOINTS.CREATE_LAYANAN_BENGKEL,
@@ -44,10 +46,12 @@ export const layananService = {
    */
   async updateLayanan(
     id: number,
-    jenisLayanan: string
+    jenisLayanan: string,
+    harga: number
   ): Promise<UpdateLayananResponse> {
     const payload: UpdateLayananRequest = {
       jenis_layanan: jenisLayanan,
+      harga: harga,
     };
     const response = await httpService.put<UpdateLayananResponse>(
       `${API_ENDPOINTS.UPDATE_LAYANAN_BENGKEL}/${id}`,

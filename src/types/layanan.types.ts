@@ -6,6 +6,7 @@ export interface LayananBengkelItem {
   id: number;
   bengkel_id: number;
   jenis_layanan: string;
+  harga: number;
   created_at: string;
   updated_at: string;
 }
@@ -16,8 +17,13 @@ export interface ListLayananResponse {
   data: LayananBengkelItem[];
 }
 
+export interface LayananItem {
+  nama: string;
+  harga: number;
+}
+
 export interface CreateLayananRequest {
-  jenis_layanan: string[];
+  jenis_layanan: LayananItem[];
 }
 
 export interface BengkelInfo {
@@ -40,6 +46,7 @@ export interface CreateLayananResponse {
 
 export interface UpdateLayananRequest {
   jenis_layanan: string;
+  harga: number;
 }
 
 export interface UpdateLayananResponse {
