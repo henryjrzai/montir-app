@@ -18,6 +18,15 @@ export interface RegisterRequest {
   role: "pelanggan" | "bengkel";
 }
 
+export interface ResetPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface Bengkel {
   id: number;
   user_id: number;

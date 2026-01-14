@@ -4,11 +4,13 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: "https://montir.tempakodedevelopment.my.id/api",
+  // BASE_URL: "https://montir.tempakodedevelopment.my.id/api",
+  BASE_URL: "https://25ff5222105a.ngrok-free.app/api",
   TIMEOUT: 30000, // 30 seconds
   HEADERS: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
   },
 } as const;
 
@@ -17,6 +19,7 @@ export const API_ENDPOINTS = {
   // Auth
   LOGIN: "/login",
   REGISTER: "/register",
+  RESET_PASSWORD_REQUEST: "/reset-password-request",
 
   // Profile
   GET_PROFILE: "/profil",

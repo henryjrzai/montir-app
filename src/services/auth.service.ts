@@ -8,6 +8,8 @@ import {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
   User,
 } from "../types/auth.types";
 import { httpService } from "./http.service";
@@ -104,6 +106,20 @@ export const AuthService = {
       await StorageService.saveUser(response.data);
     }
 
+    return response;
+  },
+
+  /**
+   * Request reset password
+   * POST /reset-password-request
+   */
+  async resetPasswordRequest(
+    data: ResetPasswordRequest
+  ): Promise<ResetPasswordResponse> {
+    const response = await httpService.post<ResetPasswordResponse>(
+      API_ENDPOINTS.RESET_PASSWORD_REQUEST,
+      data
+    );
     return response;
   },
 };

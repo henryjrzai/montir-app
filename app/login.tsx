@@ -132,6 +132,21 @@ export default function LoginScreen() {
             ) : null}
           </View>
 
+          <View>
+            <TouchableOpacity
+              onPress={() => router.push("/forgot-password" as any)}
+            >
+              <Text
+                style={[
+                  styles.linkText,
+                  { textAlign: "right", marginBottom: 16, fontStyle: "italic" },
+                ]}
+              >
+                Lupa Password?
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Login Button */}
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
