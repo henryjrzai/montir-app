@@ -100,6 +100,7 @@ export interface LayananBengkel {
   id: number;
   bengkel_id: number;
   jenis_layanan: string;
+  harga: number;
   created_at: string;
   updated_at: string;
 }
@@ -190,6 +191,7 @@ export interface LayananBengkelItem {
   id: number;
   bengkel_id: number;
   jenis_layanan: string;
+  harga: number;
   created_at: string;
   updated_at: string;
 }

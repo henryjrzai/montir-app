@@ -296,7 +296,7 @@ export default function BengkelOrderDetailScreen() {
           <View style={styles.layananBox}>
             <Text style={styles.layananIcon}>🔧</Text>
             <Text style={styles.layananName}>
-              {orderData.layanan_bengkel.jenis_layanan}
+              {orderData.layanan_bengkel.jenis_layanan} - Rp. {orderData.layanan_bengkel.harga.toLocaleString("id-ID")}
             </Text>
           </View>
         </View>

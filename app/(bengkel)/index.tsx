@@ -49,7 +49,7 @@ export default function BengkelHomeScreen() {
   // Function untuk load order list
   const loadOrders = useCallback(async () => {
     // Hanya load orders jika bengkel sudah verified
-    if (!bengkelData || bengkelData.verifikasi !== "1") {
+    if (!bengkelData || bengkelData.verifikasi !== 1) {
       return;
     }
 

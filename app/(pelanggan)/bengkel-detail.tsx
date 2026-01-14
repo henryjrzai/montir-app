@@ -242,6 +242,7 @@ export default function BengkelDetailScreen() {
                   <Text style={styles.layananIcon}>🔧</Text>
                 </View>
                 <Text style={styles.layananText}>{layanan.jenis_layanan}</Text>
+                <Text style={styles.layananText}>{`Rp. ${layanan.harga.toLocaleString("id-ID")}`}</Text>
                 <Text style={styles.orderHint}>Tap untuk pesan</Text>
               </TouchableOpacity>
             ))}

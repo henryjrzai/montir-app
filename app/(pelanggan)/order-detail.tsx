@@ -276,7 +276,7 @@ export default function OrderDetailScreen() {
           <ScrollView style={styles.reviewContent}>
             <View style={styles.reviewSection}>
               <Text style={styles.reviewSectionTitle}>
-                Ulasan untuk Bengkel "{order.montir?.bengkel.nama}"
+                Ulasan untuk Bengkel `${order.montir?.bengkel.nama}`
               </Text>
               <Text style={styles.reviewLabel}>Rating Bengkel</Text>
               <StarRating
@@ -297,7 +297,7 @@ export default function OrderDetailScreen() {
 
             <View style={styles.reviewSection}>
               <Text style={styles.reviewSectionTitle}>
-                Ulasan untuk Montir "{order.montir?.user.nama}"
+                Ulasan untuk Montir `${order.montir?.user.nama}`
               </Text>
               <Text style={styles.reviewLabel}>Rating Montir</Text>
               <StarRating
@@ -377,6 +377,12 @@ export default function OrderDetailScreen() {
               <Text style={styles.infoLabel}>Jenis Layanan:</Text>
               <Text style={styles.infoValue}>
                 {order.layanan_bengkel.jenis_layanan}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Harga:</Text>
+              <Text style={styles.infoValue}>
+                Rp. {order.layanan_bengkel.harga.toLocaleString("id-ID")}
               </Text>
             </View>
           </View>

@@ -379,7 +379,7 @@ export default function LayananScreen() {
                           </Text>
                           <Text style={{ fontStyle: "italic" }}>
                             {item.harga
-                              ? `Rp.${item.harga.toLocaleString()}`
+                              ? `Rp.${item.harga.toLocaleString("id-ID")}`
                               : ""}
                           </Text>
                         </View>
