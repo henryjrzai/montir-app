@@ -9,6 +9,12 @@ export interface BengkelSearchRequest {
   jenis_layanan: string;
 }
 
+export interface LayananItem {
+  id: number;
+  jenis_layanan: string;
+  harga: number;
+}
+
 export interface BengkelSearchItem {
   id: number;
   nama: string;
@@ -18,7 +24,7 @@ export interface BengkelSearchItem {
   foto: string;
   jarak: string;
   jarak_meter: number;
-  layanan: string[];
+  layanan: LayananItem[];
 }
 
 export interface BengkelSearchResponse {
@@ -59,7 +65,13 @@ export interface OrderHistoryItem {
   pelanggan_id: number;
   latitude: string;
   longitude: string;
-  status: "menunggu" | "kelokasi" | "kerjakan" | "pembayaran" | "selesai" | "batal";
+  status:
+    | "menunggu"
+    | "kelokasi"
+    | "kerjakan"
+    | "pembayaran"
+    | "selesai"
+    | "batal";
   harga_layanan: string | null;
   status_pembayaran: string;
   bukti_bayar: string | null;
@@ -122,7 +134,13 @@ export interface OrderDetail {
   pelanggan_id: number;
   latitude: string;
   longitude: string;
-  status: "menunggu" | "kelokasi" | "kerjakan"  | "pembayaran" | "selesai" | "batal";
+  status:
+    | "menunggu"
+    | "kelokasi"
+    | "kerjakan"
+    | "pembayaran"
+    | "selesai"
+    | "batal";
   harga_layanan: number | null;
   status_pembayaran: string;
   bukti_bayar: string | null;

@@ -232,9 +232,11 @@ export default function SearchBengkelScreen() {
 
                     {/* Layanan Tags */}
                     <View style={styles.layananContainer}>
-                      {bengkel.layanan.map((layanan, index) => (
-                        <View key={index} style={styles.layananTag}>
-                          <Text style={styles.layananTagText}>{layanan}</Text>
+                      {bengkel.layanan.map((layanan) => (
+                        <View key={layanan.id} style={styles.layananTag}>
+                          <Text style={styles.layananTagText}>
+                            {layanan.jenis_layanan}
+                          </Text>
                         </View>
                       ))}
                     </View>
