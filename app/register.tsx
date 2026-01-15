@@ -20,7 +20,7 @@ import {
 import { Colors } from "../src/constants/colors";
 import { useAuth } from "../src/contexts/AuthContext";
 
-type UserRole = "pelanggan" | "bengkel";
+type UserRole = "pelanggan" | "bengkel" | "montir";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -48,6 +48,7 @@ export default function RegisterScreen() {
   const roles = [
     { value: "pelanggan", label: "Pelanggan" },
     { value: "bengkel", label: "Bengkel" },
+    // { value: "montir", label: "Montir" },
   ];
 
   const validateForm = (): boolean => {

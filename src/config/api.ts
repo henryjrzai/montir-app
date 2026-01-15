@@ -5,7 +5,7 @@
 
 export const API_CONFIG = {
   // BASE_URL: "https://montir.tempakodedevelopment.my.id/api",
-  BASE_URL: "https://25ff5222105a.ngrok-free.app/api",
+  BASE_URL: "https://15fbc1aeabae.ngrok-free.app/api",
   TIMEOUT: 30000, // 30 seconds
   HEADERS: {
     "Content-Type": "application/json",

@@ -54,6 +54,7 @@ export default function MontirOrderDetailScreen() {
       const response = await OrderService.getOrderDetail(Number(orderId));
       if (response.status === "success" && response.data) {
         setOrderData(response.data);
+        setHargaLayanan(response.data.layanan_bengkel.harga.toString() || "");
       }
     } catch (error: any) {
       console.error("[MontirOrderDetail] Failed to load:", error);
@@ -76,6 +77,7 @@ export default function MontirOrderDetailScreen() {
     setRefreshing(true);
     await loadOrderDetail();
     setRefreshing(false);
+    console.log("Refreshed order detail");
   }, [loadOrderDetail]);
 
   // Update status to 'kelokasi'
@@ -299,8 +301,9 @@ export default function MontirOrderDetailScreen() {
     );
 
     const layananHarga = Number(orderData.harga_layanan || 0);
+    const biayaAdmin = Number(orderData.biaya_admin || 0);
 
-    return itemServicesTotal + layananHarga;
+    return itemServicesTotal + layananHarga + biayaAdmin;
   };
 
   if (loading) {
@@ -395,9 +398,12 @@ export default function MontirOrderDetailScreen() {
           <Text style={styles.cardTitle}>Layanan yang Dipesan</Text>
           <View style={styles.layananBox}>
             <Text style={styles.layananIcon}>🔧</Text>
-            <Text style={styles.layananName}>
-              {orderData.layanan_bengkel.jenis_layanan}
-            </Text>
+            <View>
+              <Text style={styles.layananName}>
+                {orderData.layanan_bengkel.jenis_layanan}
+              </Text>
+              <Text>Rp. {orderData.layanan_bengkel.harga.toLocaleString("id-ID")}</Text>
+            </View>
           </View>
         </View>
 
@@ -434,8 +440,8 @@ export default function MontirOrderDetailScreen() {
                     orderId: orderId,
                     orderCode: orderData.kode_order,
                     partnerName: orderData.pelanggan.nama || "Pelanggan",
-                    partnerRole: "Pelanggan"
-                  }
+                    partnerRole: "Pelanggan",
+                  },
                 });
               }}
             >
@@ -490,7 +496,7 @@ export default function MontirOrderDetailScreen() {
         {/* Item Services */}
         {orderData.item_service.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Rincian Item Service</Text>
+            <Text style={styles.cardTitle}>Rincian Item Service Tambahan</Text>
             {orderData.item_service.map((item, index) => (
               <View key={item.id} style={styles.itemServiceRow}>
                 <View style={styles.itemServiceLeft}>
@@ -538,6 +544,13 @@ export default function MontirOrderDetailScreen() {
                 </Text>
               </View>
             )}
+            <View style={styles.paymentRow}>
+              <Text style={styles.paymentLabel}>Biaya Layanan Admin:</Text>
+              <Text style={styles.paymentValue}>
+                Rp{" "}
+                {Number(orderData.biaya_admin || 0).toLocaleString("id-ID")}
+              </Text>
+            </View>
             <View style={styles.divider} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total:</Text>
@@ -643,6 +656,7 @@ export default function MontirOrderDetailScreen() {
                 placeholder="Contoh: 50000"
                 keyboardType="numeric"
                 value={hargaLayanan}
+                readOnly={true}
                 onChangeText={setHargaLayanan}
               />
 

@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
+  LogBox,
   Platform,
   StyleSheet,
   Text,
@@ -18,6 +19,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { chatService, ChatUser } from "../../src/services/chat.service";
+
+// Suppress VirtualizedList warning dari GiftedChat
+LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
 
 export default function ChatScreen() {
   const router = useRouter();

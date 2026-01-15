@@ -189,11 +189,11 @@ export default function PelangganHomeScreen() {
                   <Text style={styles.orderAddress}>
                     📍 {order.layanan_bengkel.bengkel.alamat}
                   </Text>
-                  {order.harga_layanan && (
+                  {/* {order.harga_layanan && (
                     <Text style={styles.orderPrice}>
-                      💰 Rp {parseInt(order.harga_layanan).toLocaleString()}
+                      💰 Rp {parseInt(order.harga_layanan + order.biaya_admin ).toLocaleString()}
                     </Text>
-                  )}
+                  )} */}
                 </View>
 
                 {/* Tap Indicator */}

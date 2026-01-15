@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MontirRatingChart from "../../src/components/MontirRatingChart";
+import RatingDetailModal from "../../src/components/RatingDetailModal";
 import { Colors } from "../../src/constants/colors";
 import { useAuth } from "../../src/contexts/AuthContext";
 import { BengkelService } from "../../src/services/bengkel.service";
@@ -19,8 +21,6 @@ import { OrderService } from "../../src/services/order.service";
 import { StorageService } from "../../src/services/storage.service";
 import { BengkelData } from "../../src/types/bengkel.types";
 import { Order } from "../../src/types/order.types";
-import MontirRatingChart from "../../src/components/MontirRatingChart";
-import RatingDetailModal from "../../src/components/RatingDetailModal";
 import { checkBengkelStatus } from "../../src/utils/bengkelHelper";
 
 export default function BengkelHomeScreen() {
@@ -261,7 +261,8 @@ export default function BengkelHomeScreen() {
                         order.status === "menunggu" && styles.statusMenunggu,
                         order.status === "kelokasi" && styles.statusKelokasi,
                         order.status === "kerjakan" && styles.statusKerjakan,
-                        order.status === "pembayaran" && styles.statusPembayaran,
+                        order.status === "pembayaran" &&
+                          styles.statusPembayaran,
                         order.status === "selesai" && styles.statusSelesai,
                         order.status === "batal" && styles.statusBatal,
                       ]}
@@ -300,23 +301,23 @@ export default function BengkelHomeScreen() {
                     </View>
 
                     {/* Lokasi */}
-                    <View style={styles.lokasiInfo}>
+                    {/* <View style={styles.lokasiInfo}>
                       <Text style={styles.lokasiIcon}>📍</Text>
                       <Text style={styles.lokasiText}>
                         Lat: {parseFloat(order.latitude).toFixed(4)}, Long:{" "}
                         {parseFloat(order.longitude).toFixed(4)}
                       </Text>
-                    </View>
+                    </View> */}
 
                     {/* Harga */}
-                    {order.harga_layanan && (
+                    {/* {order.harga_layanan && (
                       <View style={styles.hargaContainer}>
                         <Text style={styles.hargaLabel}>Harga:</Text>
                         <Text style={styles.hargaText}>
                           Rp {order.harga_layanan.toLocaleString("id-ID")}
                         </Text>
                       </View>
-                    )}
+                    )} */}
 
                     {/* Payment Status */}
                     <View style={styles.paymentStatus}>

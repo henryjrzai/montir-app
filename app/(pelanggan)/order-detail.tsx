@@ -219,7 +219,7 @@ export default function OrderDetailScreen() {
     0
   );
 
-  const totalHarga = totalItemService + Number(order.harga_layanan || 0);
+  const totalHarga = totalItemService + Number(order.harga_layanan || 0) + Number(order.biaya_admin || 0);
   const showPaymentButton =
     order.status === "pembayaran" && order.status_pembayaran !== "paid";
   const showReviewButton =
@@ -495,6 +495,15 @@ export default function OrderDetailScreen() {
                     <Text style={styles.infoLabel}>Total Item Service:</Text>
                     <Text style={styles.priceText}>
                       Rp {totalItemService.toLocaleString()}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Biaya Layanan Admin:</Text>
+                    <Text style={styles.priceText}>
+                      Rp{" "}
+                      {order.biaya_admin
+                        ? order.biaya_admin.toLocaleString()
+                        : "0"}
                     </Text>
                   </View>
                   <View style={styles.infoDivider} />

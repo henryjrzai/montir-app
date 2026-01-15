@@ -142,6 +142,7 @@ export interface OrderDetail {
     | "selesai"
     | "batal";
   harga_layanan: number | null;
+  biaya_admin: number | null;
   status_pembayaran: string;
   bukti_bayar: string | null;
   created_at: string;

@@ -199,8 +199,9 @@ export default function BengkelOrderDetailScreen() {
     );
 
     const layananHarga = Number(orderData.harga_layanan || 0);
+    const biayaAdmin = Number(orderData.biaya_admin || 0);
 
-    return itemServicesTotal + layananHarga;
+    return itemServicesTotal + layananHarga + biayaAdmin;
   };
 
   if (loading) {
@@ -426,6 +427,12 @@ export default function BengkelOrderDetailScreen() {
               </Text>
             </View>
           )}
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Biaya Layanan Admin:</Text>
+            <Text style={styles.paymentValue}>
+              Rp {Number(orderData.biaya_admin || 0).toLocaleString("id-ID")}
+            </Text>
+          </View>
           <View style={styles.divider} />
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total:</Text>

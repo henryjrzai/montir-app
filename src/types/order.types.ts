@@ -18,6 +18,7 @@ export interface LayananBengkel {
   id: number;
   bengkel_id: number;
   jenis_layanan: string;
+  harga: number;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +33,7 @@ export interface Order {
   longitude: string;
   status: "menunggu" | "kelokasi" | "kerjakan"| "pembayaran" | "selesai" | "batal";
   harga_layanan: number | null;
+  biaya_admin: number | null;
   status_pembayaran: "pending" | "paid" | "expired" | "failed";
   bukti_bayar: string | null;
   created_at: string;
