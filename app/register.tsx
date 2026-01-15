@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -44,6 +45,10 @@ export default function RegisterScreen() {
     password: "",
     password_confirmation: "",
   });
+
+  // State for Terms & Conditions
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const roles = [
     { value: "pelanggan", label: "Pelanggan" },
@@ -120,6 +125,12 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    // Check if user selected bengkel role and hasn't agreed to terms
+    if (formData.role === "bengkel" && !agreedToTerms) {
+      setShowTermsModal(true);
+      return;
+    }
+
     try {
       await register(
         formData.nama,
@@ -164,6 +175,13 @@ export default function RegisterScreen() {
   const updateFormData = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
     setErrors({ ...errors, [field]: "" });
+  };
+
+  const handleAcceptTerms = () => {
+    setAgreedToTerms(true);
+    setShowTermsModal(false);
+    // After accepting terms, proceed with registration
+    handleRegister();
   };
 
   return (
@@ -350,6 +368,132 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Terms & Conditions Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showTermsModal}
+        onRequestClose={() => setShowTermsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Syarat & Ketentuan Bengkel</Text>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              <Text style={styles.termsTitle}>
+                Selamat datang di Aplikasi Montir!
+              </Text>
+              <Text style={styles.termsText}>
+                Dengan mendaftar sebagai Bengkel, Anda menyetujui syarat dan
+                ketentuan berikut:
+              </Text>
+
+              <Text style={styles.termsSectionTitle}>
+                1. Biaya Admin Platform
+              </Text>
+              <Text style={styles.termsText}>
+                • Setiap transaksi dikenakan biaya admin sebesar{" "}
+                <Text style={styles.termsHighlight}>5% (lima persen)</Text> dari
+                total harga layanan.
+              </Text>
+              <Text style={styles.termsText}>
+                • Biaya admin ini{" "}
+                <Text style={styles.termsHighlight}>
+                  dibayarkan oleh pelanggan
+                </Text>
+                , bukan dipotong dari bengkel.
+              </Text>
+              <Text style={styles.termsText}>
+                • Perhitungan:{" "}
+                <Text style={styles.termsHighlight}>
+                  Biaya Admin = 5% × (Harga Layanan + Item Service Tambahan)
+                </Text>
+              </Text>
+              <Text style={styles.termsText}>
+                • Contoh: Harga layanan Rp 100.000 + Item service Rp 50.000 = Rp
+                150.000. Biaya admin = Rp 7.500 (5% × Rp 150.000). Total yang
+                dibayar pelanggan = Rp 157.500.
+              </Text>
+
+              <Text style={styles.termsSectionTitle}>
+                2. Pembayaran dan Pencairan Dana
+              </Text>
+              <Text style={styles.termsText}>
+                • Bengkel akan menerima pembayaran sesuai harga layanan dan item
+                service yang telah ditetapkan (tanpa potongan).
+              </Text>
+              <Text style={styles.termsText}>
+                • Biaya admin 5% dibayarkan langsung oleh pelanggan kepada
+                platform.
+              </Text>
+              <Text style={styles.termsText}>
+                • Pencairan dana dilakukan setelah pelanggan menyelesaikan
+                pembayaran dan konfirmasi order selesai.
+              </Text>
+
+              <Text style={styles.termsSectionTitle}>3. Kualitas Layanan</Text>
+              <Text style={styles.termsText}>
+                • Bengkel wajib memberikan layanan terbaik kepada pelanggan.
+              </Text>
+              <Text style={styles.termsText}>
+                • Bengkel bertanggung jawab atas kualitas pekerjaan dan suku
+                cadang yang digunakan.
+              </Text>
+              <Text style={styles.termsText}>
+                • Harga layanan dan item service harus transparan dan sesuai
+                dengan kondisi aktual.
+              </Text>
+
+              <Text style={styles.termsSectionTitle}>4. Kewajiban Bengkel</Text>
+              <Text style={styles.termsText}>
+                • Merespons pesanan dengan cepat dan tepat waktu.
+              </Text>
+              <Text style={styles.termsText}>
+                • Memberikan informasi yang akurat mengenai layanan dan harga.
+              </Text>
+              <Text style={styles.termsText}>
+                • Menjaga profesionalitas dalam setiap interaksi dengan
+                pelanggan.
+              </Text>
+
+              <Text style={styles.termsSectionTitle}>5. Sanksi</Text>
+              <Text style={styles.termsText}>
+                • Pelanggaran terhadap syarat dan ketentuan dapat mengakibatkan
+                penangguhan atau penutupan akun bengkel.
+              </Text>
+              <Text style={styles.termsText}>
+                • Komplain berulang dari pelanggan akan ditinjau dan dapat
+                berdampak pada status akun.
+              </Text>
+
+              <Text style={styles.termsFooter}>
+                Dengan menyetujui syarat dan ketentuan ini, Anda telah membaca,
+                memahami, dan menyetujui semua ketentuan yang berlaku.
+              </Text>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalButtonSecondary}
+                onPress={() => setShowTermsModal(false)}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButtonPrimary}
+                onPress={handleAcceptTerms}
+              >
+                <Text style={styles.modalButtonPrimaryText}>
+                  Setuju & Lanjutkan
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -476,5 +620,96 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: Colors.primary,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "90%",
+    maxHeight: "80%",
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    backgroundColor: Colors.primary,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.white,
+  },
+  modalContent: {
+    padding: 20,
+    maxHeight: 400,
+  },
+  termsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  termsSectionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  termsText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+  },
+  termsHighlight: {
+    fontWeight: "bold",
+    color: Colors.primary,
+  },
+  termsFooter: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+    fontStyle: "italic",
+    // marginTop: 15,
+    marginBottom: 25,
+    lineHeight: 18,
+  },
+  modalActions: {
+    flexDirection: "row",
+    padding: 16,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  modalButtonSecondary: {
+    flex: 1,
+    height: 44,
+    backgroundColor: Colors.gray[200],
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalButtonSecondaryText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: Colors.text.primary,
+  },
+  modalButtonPrimary: {
+    flex: 1,
+    height: 44,
+    backgroundColor: Colors.primary,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalButtonPrimaryText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: Colors.white,
   },
 });
