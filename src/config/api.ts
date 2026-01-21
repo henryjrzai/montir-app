@@ -10,7 +10,7 @@ export const API_CONFIG = {
   HEADERS: {
     "Content-Type": "application/json",
     Accept: "application/json",
-    "ngrok-skip-browser-warning": "true",
+    // "ngrok-skip-browser-warning": "true",
   },
 } as const;
 
