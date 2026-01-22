@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -68,7 +69,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       Alert.alert(
         "Login Gagal",
-        error.message || "Terjadi kesalahan saat login"
+        error.message || "Terjadi kesalahan saat login",
       );
     }
   };
@@ -84,6 +85,11 @@ export default function LoginScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
+          <Image
+            source={require("../assets/images/montir-app-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Montir App</Text>
           <Text style={styles.subtitle}>Masuk ke akun Anda</Text>
         </View>
@@ -189,6 +195,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   title: {
     fontSize: 32,

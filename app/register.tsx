@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -139,7 +140,7 @@ export default function RegisterScreen() {
         formData.password,
         formData.password_confirmation,
         formData.no_telp,
-        formData.role
+        formData.role,
       );
 
       // Clear form setelah berhasil
@@ -162,12 +163,12 @@ export default function RegisterScreen() {
             text: "OK",
             onPress: () => router.replace("/login" as any),
           },
-        ]
+        ],
       );
     } catch (error: any) {
       Alert.alert(
         "Registrasi Gagal",
-        error.message || "Terjadi kesalahan saat registrasi"
+        error.message || "Terjadi kesalahan saat registrasi",
       );
     }
   };
@@ -195,6 +196,11 @@ export default function RegisterScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
+          <Image
+            source={require("../assets/images/montir-app-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Daftar Akun</Text>
           <Text style={styles.subtitle}>Buat akun baru Anda</Text>
         </View>
@@ -511,6 +517,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 32,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   title: {
     fontSize: 32,

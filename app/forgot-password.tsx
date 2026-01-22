@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -69,6 +70,11 @@ export default function ForgotPassword() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.header}>
+        <Image
+          source={require("../assets/images/montir-app-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Montir App</Text>
         <Text style={styles.subtitle}>Reset Password</Text>
       </View>
@@ -127,6 +133,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   title: {
     fontSize: 32,
